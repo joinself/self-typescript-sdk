@@ -1,6 +1,3 @@
-default:
-  image: ubuntu:focal-20210217
-
 stages:
   - pre-build
   - build
@@ -86,6 +83,7 @@ license-check:
 
 build:
   stage: build
+  image: ubuntu:focal-20210217
   script:
     - *setup
     - *build
@@ -97,6 +95,7 @@ build:
 
 test:
   stage: test
+  image: ubuntu:focal-20210217
   script:
     - *setup
     - *test
@@ -105,7 +104,7 @@ test:
 
 release:
   stage: release
-  image: eu.gcr.io/principal-oxide-204416/deploy
+  image: eu.gcr.io/principal-oxide-204416/tools
   script:
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
@@ -114,6 +113,7 @@ release:
 
 npm:
   stage: publish
+  image: ubuntu:focal-20210217
   script:
     - ${SCRIPTS_DIR}/npm-setup
     - *setup
