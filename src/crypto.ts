@@ -65,7 +65,7 @@ export default class Crypto {
     return cc
   }
 
-  public async encrypt(message: string, recipients: Recipient[]): Promise<string> {
+  public async encrypt(message: string, recipients: Recipient[]): Promise<Uint8Array> {
     const fs = require('fs')
     const crypto = require('self-crypto')
 

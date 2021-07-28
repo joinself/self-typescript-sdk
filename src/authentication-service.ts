@@ -100,11 +100,11 @@ export default class AuthenticationService {
     let devices = await this.is.devices(selfid)
 
     let j = this.buildRequest(selfid, opts)
-    let ciphertext = this.jwt.toSignedJson(j)
+    let plaintext = this.jwt.toSignedJson(j)
 
     var msgs = []
     for (var i = 0; i < devices.length; i++) {
-      var msg = await this.buildEnvelope(id, selfid, devices[i], ciphertext)
+      var msg = await this.buildEnvelope(id, selfid, devices[i], plaintext)
       msgs.push(msg)
     }
 
@@ -139,12 +139,9 @@ export default class AuthenticationService {
     let rid = builder.createString(id)
     let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
     let rcp = builder.createString(`${selfid}:${device}`)
-    let ctx = builder.createString(this.fixEncryption(ciphertext))
-
-    let mta = message.SelfMessaging.Metadata.createMetadata(
-      builder, 
-      flatbuffers.createLong(0, 0), 
-      flatbuffers.createLong(0, 0)
+    let ctx = message.SelfMessaging.Message.createCiphertextVector(
+      builder,
+      ciphertext
     )
 
     message.SelfMessaging.Message.startMessage(builder)
@@ -153,17 +150,20 @@ export default class AuthenticationService {
     message.SelfMessaging.Message.addSender(builder, snd)
     message.SelfMessaging.Message.addRecipient(builder, rcp)
     message.SelfMessaging.Message.addCiphertext(builder, ctx)
-    message.SelfMessaging.Message.addMetadata(builder, mta)
+
+    message.SelfMessaging.Message.addMetadata(builder,
+      message.SelfMessaging.Metadata.createMetadata(
+        builder,
+        flatbuffers.createLong(0, 0),
+        flatbuffers.createLong(0, 0)
+      )
+    )
     
     let msg = message.SelfMessaging.Message.endMessage(builder)
 
     builder.finish(msg)
 
     return builder.asUint8Array()
-  }
-
-  fixEncryption(msg: string): any {
-    return Buffer.from(msg)
   }
 
   /**

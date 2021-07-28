@@ -6,12 +6,13 @@ import Messaging from '../src/messaging'
 import FactsService from '../src/facts-service'
 
 import { WebSocket, Server } from 'mock-socket'
-import { Message } from 'self-protos/message_pb'
-import { MsgType } from 'self-protos/msgtype_pb'
+import * as acl from '../src/msgproto/acl_generated'
+import * as message from '../src/msgproto/message_generated'
+import * as mtype from '../src/msgproto/types_generated'
 import MessagingService from '../src/messaging-service'
-import { AccessControlList } from 'self-protos/acl_pb'
-import { ACLCommand } from 'self-protos/aclcommand_pb'
 import EncryptionMock from './mocks/encryption-mock'
+
+import * as flatbuffers from 'flatbuffers'
 
 describe('Messaging service', () => {
   let mss: MessagingService
@@ -35,9 +36,11 @@ describe('Messaging service', () => {
     ms.ws = new WebSocket(fakeURL)
     ms.connected = true
     mss = new MessagingService(jwt, ms, is, ec)
+    /*
     jest.spyOn(mss, 'fixEncryption').mockImplementation((msg: string): any => {
       return msg
     })
+    */
   })
 
   afterEach(async () => {
@@ -52,16 +55,17 @@ describe('Messaging service', () => {
           // The cid is automatically generated
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
-          let msg = AccessControlList.deserializeBinary(data.data.valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data.data.valueOf() as Uint8Array)
+          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf);
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getType()).toEqual(MsgType.ACL)
-          expect(msg.getCommand()).toEqual(ACLCommand.PERMIT)
+          expect(aclReq.id().length).toEqual(36)
+          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
+          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.PERMIT)
 
           // Check ciphertext
-          let input = msg.getPayload_asB64()
-          let j = JSON.parse(Buffer.from(input, 'base64').toString())
+          let input = aclReq.payloadArray()
+          let j = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(j['payload'], 'base64').toString())
 
           expect(payload.iss).toEqual('appID')
@@ -85,16 +89,17 @@ describe('Messaging service', () => {
           // The cid is automatically generated
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
-          let msg = AccessControlList.deserializeBinary(data.data.valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data.data.valueOf() as Uint8Array)
+          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf);
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getType()).toEqual(MsgType.ACL)
-          expect(msg.getCommand()).toEqual(ACLCommand.REVOKE)
+          expect(aclReq.id().length).toEqual(36)
+          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
+          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.REVOKE)
 
           // Check ciphertext
-          let input = msg.getPayload_asB64()
-          let j = JSON.parse(Buffer.from(input, 'base64').toString())
+          let input = aclReq.payloadArray()
+          let j = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(j['payload'], 'base64').toString())
 
           expect(payload.iss).toEqual('appID')
@@ -117,12 +122,13 @@ describe('Messaging service', () => {
           // The cid is automatically generated
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
-          let msg = AccessControlList.deserializeBinary(data.valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data.valueOf() as Uint8Array)
+          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf)
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getType()).toEqual(MsgType.ACL)
-          expect(msg.getCommand()).toEqual(ACLCommand.LIST)
+          expect(aclReq.id().length).toEqual(36)
+          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
+          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.LIST)
           return new Promise(resolve => {
             resolve(['a', 'b'])
           })
@@ -141,12 +147,13 @@ describe('Messaging service', () => {
           // The cid is automatically generated
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
-          let msg = AccessControlList.deserializeBinary(data.valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data.valueOf() as Uint8Array)
+          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf)
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getType()).toEqual(MsgType.ACL)
-          expect(msg.getCommand()).toEqual(ACLCommand.LIST)
+          expect(aclReq.id().length).toEqual(36)
+          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
+          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.LIST)
 
           return new Promise(resolve => {
             resolve(['a', 'b'])
@@ -163,12 +170,13 @@ describe('Messaging service', () => {
           // The cid is automatically generated
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
-          let msg = AccessControlList.deserializeBinary(data.valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data.valueOf() as Uint8Array)
+          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf)
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getType()).toEqual(MsgType.ACL)
-          expect(msg.getCommand()).toEqual(ACLCommand.LIST)
+          expect(aclReq.id().length).toEqual(36)
+          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
+          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.LIST)
 
           return new Promise(resolve => {
             resolve(['*'])
@@ -205,15 +213,16 @@ describe('Messaging service', () => {
         (cid: string, data): Promise<any | Response> => {
           // The cid is automatically generated
           expect(cid != undefined).toBeTruthy()
-          let msg = Message.deserializeBinary(data.data.valueOf()[0] as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data.data.valueOf()[0] as Uint8Array)
+          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getType()).toEqual(MsgType.MSG)
+          expect(msg.id().length).toEqual(36)
+          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
 
           // Check ciphertext
-          let input = msg.getCiphertext_asB64()
-          let ciphertext = JSON.parse(Buffer.from(input, 'base64').toString())
+          let input = msg.ciphertextArray()
+          let ciphertext = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
           expect(payload.jti.length).toEqual(36)
           expect(payload.cid.length).toEqual(36)
@@ -244,15 +253,16 @@ describe('Messaging service', () => {
           // The cid is automatically generated
           expect(cid != undefined).toBeTruthy()
           // The cid is automatically generated
-          let msg = Message.deserializeBinary(data.data.valueOf()[0] as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data.data.valueOf()[0] as Uint8Array)
+          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getType()).toEqual(MsgType.MSG)
+          expect(msg.id().length).toEqual(36)
+          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
 
           // Check ciphertext
-          let input = msg.getCiphertext_asB64()
-          let ciphertext = JSON.parse(Buffer.from(input, 'base64').toString())
+          let input = msg.ciphertextArray()
+          let ciphertext = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
           expect(payload.jti.length).toEqual(36)
           expect(payload.cid.length).toEqual(36)

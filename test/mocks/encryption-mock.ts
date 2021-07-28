@@ -14,13 +14,12 @@ export default class EncryptionMock {
   public async encrypt(
     message: string,
     recipients: Recipient[],
-  ): Promise<string> {
-    const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64')
-    return encode(message)
+  ): Promise<Uint8Array> {
+    return Buffer.from(message)
   }
 
-  public decrypt(message: string, sender: string, sender_device: string): string {
-    return message
+  public decrypt(message: Uint8Array, sender: string, sender_device: string): string {
+    return message.toString()
   }
 
   public accountPath(): string {
@@ -31,6 +30,6 @@ export default class EncryptionMock {
     return `/tmp/random-session.pickle`
   }
 
-  getInboundSessionWithBob(message: string, session_file_name: string): any {}
+  getInboundSessionWithBob(message: Uint8Array, session_file_name: string): any {}
   async getOutboundSessionWithBob(recipient, recipientDevice, session_file_name: string): Promise<any> {}
 }

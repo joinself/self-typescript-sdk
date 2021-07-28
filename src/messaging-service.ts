@@ -72,7 +72,7 @@ export default class MessagingService {
     }
 
     this.connections.push(selfid)
-    let payload = this.jwt.prepare({
+    let payload = this.jwt.toSignedJson({
       jti: uuidv4(),
       cid: uuidv4(),
       typ: 'acl.permit',
@@ -88,13 +88,17 @@ export default class MessagingService {
     let builder = new flatbuffers.Builder(1024)
 
     let rid = builder.createString(id)
-    let pld = builder.createString(payload)
+    let pld = acl.SelfMessaging.ACL.createPayloadVector(
+      builder,
+      Buffer.from(payload)
+    )
 
     acl.SelfMessaging.ACL.startACL(builder)
     acl.SelfMessaging.ACL.addId(builder, rid)
     acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
     acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.PERMIT)
     acl.SelfMessaging.ACL.addPayload(builder, pld)
+
     let aclReq = acl.SelfMessaging.ACL.endACL(builder)
 
     builder.finish(aclReq)
@@ -171,7 +175,7 @@ export default class MessagingService {
       this.connections.splice(index, 1);
     }
 
-    let payload = this.jwt.prepare({
+    let payload = this.jwt.toSignedJson({
       iss: this.jwt.appID,
       sub: this.jwt.appID,
       iat: new Date(Math.floor(this.jwt.now())).toISOString(),
@@ -187,13 +191,17 @@ export default class MessagingService {
     let builder = new flatbuffers.Builder(1024)
 
     let rid = builder.createString(id)
-    let pld = builder.createString(payload)
+    let pld = acl.SelfMessaging.ACL.createPayloadVector(
+      builder,
+      Buffer.from(payload)
+    )
 
     acl.SelfMessaging.ACL.startACL(builder)
     acl.SelfMessaging.ACL.addId(builder, rid)
     acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
     acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.REVOKE)
     acl.SelfMessaging.ACL.addPayload(builder, pld)
+
     let aclReq = acl.SelfMessaging.ACL.endACL(builder)
 
     builder.finish(aclReq)
@@ -236,7 +244,7 @@ export default class MessagingService {
     }
 
     let j = this.buildRequest(sub, request)
-    let ciphertext = this.jwt.toSignedJson(j)
+    let plaintext = this.jwt.toSignedJson(j)
 
     let recipients:Recipient[] = []
 
@@ -265,12 +273,11 @@ export default class MessagingService {
       }
     }
 
-    let ct = await this.crypto.encrypt(ciphertext, recipients)
-    let fct = this.fixEncryption(ct)
+    let ct = await this.crypto.encrypt(plaintext, recipients)
 
     var msgs = []
     for (var i = 0; i < recipients.length; i++) {
-      var msg = await this.buildEnvelope(uuidv4(), recipients[i].id, recipients[i].device, fct)
+      var msg = await this.buildEnvelope(uuidv4(), recipients[i].id, recipients[i].device, ct)
       msgs.push(msg)
     }
 
@@ -315,19 +322,16 @@ export default class MessagingService {
     id: string,
     selfid: string,
     device: string,
-    ct: Uint8Array
+    ciphertext: Uint8Array
   ): Promise<Uint8Array> {
     let builder = new flatbuffers.Builder(1024)
 
     let rid = builder.createString(id)
     let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
     let rcp = builder.createString(`${selfid}:${device}`)
-    let ctx = builder.createString(ct)
-
-    let mta = message.SelfMessaging.Metadata.createMetadata(
-      builder, 
-      flatbuffers.createLong(0, 0), 
-      flatbuffers.createLong(0, 0)
+    let ctx = message.SelfMessaging.Message.createCiphertextVector(
+      builder,
+      ciphertext
     )
 
     message.SelfMessaging.Message.startMessage(builder)
@@ -335,17 +339,21 @@ export default class MessagingService {
     message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
     message.SelfMessaging.Message.addSender(builder, snd)
     message.SelfMessaging.Message.addRecipient(builder, rcp)
+
     message.SelfMessaging.Message.addCiphertext(builder, ctx)
-    message.SelfMessaging.Message.addMetadata(builder, mta)
+
+    message.SelfMessaging.Message.addMetadata(builder,
+      message.SelfMessaging.Metadata.createMetadata(
+        builder,
+        flatbuffers.createLong(0, 0),
+        flatbuffers.createLong(0, 0)
+      )
+    )
     
     let msg = message.SelfMessaging.Message.endMessage(builder)
 
     builder.finish(msg)
 
     return builder.asUint8Array()
-  }
-
-  fixEncryption(msg: string): any {
-    return Buffer.from(msg)
   }
 }

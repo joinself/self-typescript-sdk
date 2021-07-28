@@ -134,12 +134,9 @@ export default class FactsService {
     let rid = builder.createString(id)
     let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
     let rcp = builder.createString(`${selfid}:${device}`)
-    let ctx = builder.createString(this.fixEncryption(ciphertext))
-
-    let mta = message.SelfMessaging.Metadata.createMetadata(
-      builder, 
-      flatbuffers.createLong(0, 0), 
-      flatbuffers.createLong(0, 0)
+    let ctx = message.SelfMessaging.Message.createCiphertextVector(
+      builder,
+      ciphertext
     )
 
     message.SelfMessaging.Message.startMessage(builder)
@@ -148,8 +145,15 @@ export default class FactsService {
     message.SelfMessaging.Message.addSender(builder, snd)
     message.SelfMessaging.Message.addRecipient(builder, rcp)
     message.SelfMessaging.Message.addCiphertext(builder, ctx)
-    message.SelfMessaging.Message.addMetadata(builder, mta)
-    
+
+    message.SelfMessaging.Message.addMetadata(builder,
+      message.SelfMessaging.Metadata.createMetadata(
+        builder,
+        flatbuffers.createLong(0, 0),
+        flatbuffers.createLong(0, 0)
+      )
+    )
+
     let msg = message.SelfMessaging.Message.endMessage(builder)
 
     builder.finish(msg)
@@ -157,9 +161,6 @@ export default class FactsService {
     return builder.asUint8Array()
   }
 
-  fixEncryption(msg: string): any {
-    return Buffer.from(msg)
-  }
   /**
    * Sends a request via an intermediary
    * @param selfid user identifier to send the fact request.

@@ -174,11 +174,11 @@ export default class Messaging {
     }
   }
 
-  private async onmessage(hdr: header.SelfMessaging.Header, event: MessageEvent<any>) {
+  private async onmessage(hdr: header.SelfMessaging.Header, data: Uint8Array) {
     this.logger.debug(`received ${hdr.id()} (${hdr.msgtype()})`)
     switch (hdr.msgtype()) {
       case mtype.SelfMessaging.MsgType.ERR: {
-        let buf = new flatbuffers.ByteBuffer(event.data)
+        let buf = new flatbuffers.ByteBuffer(data)
         let ntf = notification.SelfMessaging.Notification.getRootAsNotification(buf);
 
         let sw = 0
@@ -209,7 +209,7 @@ export default class Messaging {
       case mtype.SelfMessaging.MsgType.ACL: {
         this.logger.debug(`ACL ${hdr.id()}`)
 
-        let buf = new flatbuffers.ByteBuffer(event.data)
+        let buf = new flatbuffers.ByteBuffer(data)
         let resp = acl.SelfMessaging.ACL.getRootAsACL(buf)
 
         this.processIncommingACL(resp.id(), resp.payloadArray().toString())
@@ -218,7 +218,7 @@ export default class Messaging {
       case mtype.SelfMessaging.MsgType.MSG: {
         this.logger.debug(`message received ${hdr.id()}`)
 
-        let buf = new flatbuffers.ByteBuffer(event.data)
+        let buf = new flatbuffers.ByteBuffer(data)
         let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
 
         await this.processIncommingMessage(
@@ -258,7 +258,7 @@ export default class Messaging {
     this.ws.onmessage = async event => {
       let buf = new flatbuffers.ByteBuffer(event.data)
       let hdr = header.SelfMessaging.Header.getRootAsHeader(buf)
-      await this.onmessage(hdr, event)
+      await this.onmessage(hdr, event.data)
     }
   }
 
