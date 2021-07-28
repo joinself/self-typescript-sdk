@@ -6,13 +6,15 @@ import { v4 as uuidv4 } from 'uuid'
 import IdentityService from './identity-service'
 import Messaging from './messaging'
 
-import { AccessControlList } from 'self-protos/acl_pb'
-import { MsgType } from 'self-protos/msgtype_pb'
-import { ACLCommand } from 'self-protos/aclcommand_pb'
-import { Message } from 'self-protos/message_pb'
+import * as acl from './msgproto/acl_generated'
+import * as message from './msgproto/message_generated'
+import * as mtype from './msgproto/types_generated'
+
 import Crypto from './crypto'
 import { logging, Logger } from './logging'
-import { Recipient } from './crypto';
+import { Recipient } from './crypto'
+
+import * as flatbuffers from 'flatbuffers'
 
 const logger = logging.getLogger('core.self-sdk')
 
@@ -81,13 +83,25 @@ export default class MessagingService {
       acl_source: selfid,
     })
 
-    const msg = new AccessControlList()
-    msg.setType(MsgType.ACL)
-    msg.setId(uuidv4())
-    msg.setCommand(ACLCommand.PERMIT)
-    msg.setPayload(payload)
+    let id = uuidv4()
 
-    return this.ms.send_and_wait(msg.getId(), { data: msg.serializeBinary() })
+    let builder = new flatbuffers.Builder(1024)
+
+    let rid = builder.createString(id)
+    let pld = builder.createString(payload)
+
+    acl.SelfMessaging.ACL.startACL(builder)
+    acl.SelfMessaging.ACL.addId(builder, rid)
+    acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
+    acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.PERMIT)
+    acl.SelfMessaging.ACL.addPayload(builder, pld)
+    let aclReq = acl.SelfMessaging.ACL.endACL(builder)
+
+    builder.finish(aclReq)
+
+    let buf = builder.asUint8Array()
+
+    return this.ms.send_and_wait(id, { data: buf })
   }
 
   /**
@@ -105,12 +119,23 @@ export default class MessagingService {
     logger.debug('listing allowed connections')
 
     if (this.connections.length === 0) {
-      const msg = new AccessControlList()
-      msg.setType(MsgType.ACL)
-      msg.setId(uuidv4())
-      msg.setCommand(ACLCommand.LIST)
+      let id = uuidv4()
 
-      let res = await this.ms.request(msg.getId(), msg.getId(), msg.serializeBinary())
+      let builder = new flatbuffers.Builder(1024)
+
+      let rid = builder.createString(id)
+
+      acl.SelfMessaging.ACL.startACL(builder)
+      acl.SelfMessaging.ACL.addId(builder, rid)
+      acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
+      acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.LIST)
+      let aclReq = acl.SelfMessaging.ACL.endACL(builder)
+
+      builder.finish(aclReq)
+
+      let buf = builder.asUint8Array()
+
+      let res = await this.ms.request(id, id, buf)
       this.connections = res
     }
 
@@ -157,13 +182,25 @@ export default class MessagingService {
       typ: 'acl.revoke'
     })
 
-    const msg = new AccessControlList()
-    msg.setType(MsgType.ACL)
-    msg.setId(uuidv4())
-    msg.setCommand(ACLCommand.REVOKE)
-    msg.setPayload(payload)
+    let id = uuidv4()
 
-    return this.ms.send_and_wait(msg.getId(), { data: msg.serializeBinary() })
+    let builder = new flatbuffers.Builder(1024)
+
+    let rid = builder.createString(id)
+    let pld = builder.createString(payload)
+
+    acl.SelfMessaging.ACL.startACL(builder)
+    acl.SelfMessaging.ACL.addId(builder, rid)
+    acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
+    acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.REVOKE)
+    acl.SelfMessaging.ACL.addPayload(builder, pld)
+    let aclReq = acl.SelfMessaging.ACL.endACL(builder)
+
+    builder.finish(aclReq)
+
+    let buf = builder.asUint8Array()
+
+    return this.ms.send_and_wait(id, { data: buf })
   }
 
   /**
@@ -234,7 +271,7 @@ export default class MessagingService {
     var msgs = []
     for (var i = 0; i < recipients.length; i++) {
       var msg = await this.buildEnvelope(uuidv4(), recipients[i].id, recipients[i].device, fct)
-      msgs.push(msg.serializeBinary())
+      msgs.push(msg)
     }
 
     this.ms.send(j.cid, { data: msgs, waitForResponse: false })
@@ -278,16 +315,34 @@ export default class MessagingService {
     id: string,
     selfid: string,
     device: string,
-    ct: string
-  ): Promise<Message> {
-    const msg = new Message()
-    msg.setType(MsgType.MSG)
-    msg.setId(id)
-    msg.setSender(`${this.jwt.appID}:${this.jwt.deviceID}`)
-    msg.setRecipient(`${selfid}:${device}`)
-    msg.setCiphertext(ct)
+    ct: Uint8Array
+  ): Promise<Uint8Array> {
+    let builder = new flatbuffers.Builder(1024)
 
-    return msg
+    let rid = builder.createString(id)
+    let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
+    let rcp = builder.createString(`${selfid}:${device}`)
+    let ctx = builder.createString(ct)
+
+    let mta = message.SelfMessaging.Metadata.createMetadata(
+      builder, 
+      flatbuffers.createLong(0, 0), 
+      flatbuffers.createLong(0, 0)
+    )
+
+    message.SelfMessaging.Message.startMessage(builder)
+    message.SelfMessaging.Message.addId(builder, rid)
+    message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
+    message.SelfMessaging.Message.addSender(builder, snd)
+    message.SelfMessaging.Message.addRecipient(builder, rcp)
+    message.SelfMessaging.Message.addCiphertext(builder, ctx)
+    message.SelfMessaging.Message.addMetadata(builder, mta)
+    
+    let msg = message.SelfMessaging.Message.endMessage(builder)
+
+    builder.finish(msg)
+
+    return builder.asUint8Array()
   }
 
   fixEncryption(msg: string): any {

@@ -96,7 +96,7 @@ export default class Crypto {
     return ciphertext
   }
 
-  public decrypt(message: string, sender: string, sender_device: string): string {
+  public decrypt(message: Uint8Array, sender: string, sender_device: string): string {
     const fs = require('fs')
     const crypto = require('self-crypto')
 
@@ -130,7 +130,7 @@ export default class Crypto {
   }
 
 
-  getInboundSessionWithBob(message: string, session_file_name: string): any {
+  getInboundSessionWithBob(message: Uint8Array, session_file_name: string): any {
     const fs = require('fs')
     const crypto = require('self-crypto')
 
@@ -145,7 +145,7 @@ export default class Crypto {
         //       you should extract the initial message from the group message intended
         //       for your account id.
 
-        let group_message_json = JSON.parse(message)
+        let group_message_json = JSON.parse(message.toString())
         let myID = `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
         let ciphertext = group_message_json['recipients'][myID]['ciphertext']
 
