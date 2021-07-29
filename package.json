@@ -1,7 +1,7 @@
 {
   "name": "self-sdk",
   "type": "mod",
-  "version": "0.0.39",
+  "version": "0.0.40",
   "description": "",
   "keywords": [],
   "main": "dist/self-sdk.umd.js",
@@ -21,7 +21,7 @@
     "node": ">=6.0.0"
   },
   "scripts": {
-    "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "lint": "tslint --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
     "prebuild": "rimraf dist",
     "transpile": "tsc --module commonjs",
     "roll": "rollup -c rollup.config.ts",
@@ -127,6 +127,7 @@
     "@types/uuid": "^8.3.0",
     "axios": ">=0.21.1",
     "eslint": "^7.22.0",
+    "flatbuffers": "^2.0.3",
     "google-protobuf": "^4.0.0-rc.1",
     "libsodium-wrappers": "^0.7.9",
     "lodash": "^4.17.21",
@@ -135,8 +136,8 @@
     "open": "^8.0.4",
     "qrcode-generator-ts": "^0.0.3",
     "self-crypto": "^1.0.23",
-    "self-protos": "^1.0.3",
     "shelljs": "^0.8.4",
+    "string-width": "^2.1.1",
     "text-encoding": "^0.7.0",
     "ts-protoc-gen": "^0.14.0",
     "uuid": "^8.3.2",

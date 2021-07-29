@@ -7,10 +7,12 @@ import FactsService from '../src/facts-service'
 import MessagingService from '../src/messaging-service'
 
 import { WebSocket, Server } from 'mock-socket'
-import { Message } from 'self-protos/message_pb'
-import { MsgType } from 'self-protos/msgtype_pb'
+import * as message from '../src/msgproto/message_generated'
+import * as mtype from '../src/msgproto/types_generated'
 import Crypto from '../src/crypto'
 import EncryptionMock from './mocks/encryption-mock'
+
+import * as flatbuffers from 'flatbuffers'
 
 /**
  * Attestation test
@@ -42,9 +44,11 @@ describe('FactsService', () => {
     messagingService = new MessagingService(jwt, ms, is, ec)
 
     fs = new FactsService(jwt, messagingService, is, ec, 'test')
+    /*
     jest.spyOn(fs, 'fixEncryption').mockImplementation((msg: string): any => {
       return msg
     })
+    */
   })
 
   afterEach(async () => {
@@ -88,17 +92,18 @@ describe('FactsService', () => {
           // The cid is automatically generated
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
-          let msg = Message.deserializeBinary(data[0].valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data[0].valueOf() as Uint8Array)
+          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getRecipient()).toEqual('26742678155:cjK0uSMXQjKeaKGaibkVGZ')
-          expect(msg.getSender()).toEqual('appID:1')
-          expect(msg.getType()).toEqual(MsgType.MSG)
+          expect(msg.id().length).toEqual(36)
+          expect(msg.recipient()).toEqual('26742678155:cjK0uSMXQjKeaKGaibkVGZ')
+          expect(msg.sender()).toEqual('appID:1')
+          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
 
           // Check ciphertext
-          let input = msg.getCiphertext_asB64()
-          let ciphertext = JSON.parse(Buffer.from(input, 'base64').toString())
+          let input = msg.ciphertextArray()
+          let ciphertext = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
           expect(payload.typ).toEqual('identities.facts.query.req')
           expect(payload.iss).toEqual('appID')
@@ -197,17 +202,18 @@ describe('FactsService', () => {
           // The cid is automatically generated
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
-          let msg = Message.deserializeBinary(data[0].valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(data[0].valueOf() as Uint8Array)
+          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
 
           // Envelope
-          expect(msg.getId().length).toEqual(36)
-          expect(msg.getRecipient()).toEqual('self_intermediary:deviceID')
-          expect(msg.getSender()).toEqual('appID:1')
-          expect(msg.getType()).toEqual(MsgType.MSG)
+          expect(msg.id().length).toEqual(36)
+          expect(msg.recipient()).toEqual('self_intermediary:deviceID')
+          expect(msg.sender()).toEqual('appID:1')
+          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
 
           // Check ciphertext
-          let input = msg.getCiphertext_asB64()
-          let ciphertext = JSON.parse(Buffer.from(input, 'base64').toString())
+          let input = msg.ciphertextArray()
+          let ciphertext = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
           expect(payload.typ).toEqual('identities.facts.query.req')
           expect(payload.iss).toEqual('appID')
@@ -248,10 +254,12 @@ describe('FactsService', () => {
           // The cid is automatically generated
           expect(cid).toEqual('cid')
           // The cid is automatically generated
-          let msg = Message.deserializeBinary(data[0].valueOf() as Uint8Array)
-          expect(msg.getRecipient()).toEqual('intermediary:deviceID')
-          let input = msg.getCiphertext_asB64()
-          let ciphertext = JSON.parse(Buffer.from(input, 'base64').toString())
+          let buf = new flatbuffers.ByteBuffer(data[0].valueOf() as Uint8Array)
+          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+
+          expect(msg.recipient()).toEqual('intermediary:deviceID')
+          let input = msg.ciphertextArray()
+          let ciphertext = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
           expect(payload.cid).toEqual('cid')
 

@@ -4,11 +4,17 @@ import Jwt from '../src/jwt'
 import IdentityService from '../src/identity-service'
 import Messaging from '../src/messaging'
 import { WebSocket, Server } from 'mock-socket'
-import { Message } from 'self-protos/message_pb'
-import { MsgType } from 'self-protos/msgtype_pb'
+import * as acl from '../src/msgproto/acl_generated'
+import * as auth from '../src/msgproto/auth_generated'
+import * as header from '../src/msgproto/header_generated'
+import * as message from '../src/msgproto/message_generated'
+import * as notification from '../src/msgproto/notification_generated'
+import * as mtype from '../src/msgproto/types_generated'
 import Crypto from '../src/crypto'
 import EncryptionMock from './mocks/encryption-mock'
 
+import * as flatbuffers from 'flatbuffers'
+import { eventNames } from 'process'
 /**
  * Attestation test
  */
@@ -72,7 +78,7 @@ describe('messaging', () => {
 
       let c =
         'eyJwYXlsb2FkIjoiZXlKbVlXTjBjeUk2VzNzaVptRmpkQ0k2SW5Cb2IyNWxYMjUxYldKbGNpSXNJbUYwZEdWemRHRjBhVzl1Y3lJNlczc2ljR0Y1Ykc5aFpDSTZJbVY1U25Ga1IydHBUMmxKTWs5SFNtaFBWRkV6VFhrd2QwMXFTbTFNVkZKcFRtcEZkRTlYV1RKWlV6QTFUa1JaTlU5WFdUVlBWMXB0V1RKRmFVeERTbnBrVjBscFQybEpORTVFUVRWUFZHTjVUa1JCTWs5RFNYTkpiV3g2WTNsSk5rbHVUbXhpUjFwbVpHMVdlV0ZYV25CWk1rWXdZVmM1ZFVscGQybGhWMFl3U1dwdmFVMXFRWGxOUXpCM1Rua3dlVTlXVVhkUFJHOTRUVlJ2ZUU1RE5EUk5WR3QzVFdwTk5FNXFVbUZKYVhkcFl6STVNV050VG14SmFtOXBaRmhPYkdOc09YcGpSMVpxWVZkYWNGcFhVV2xNUTBveVdsaEtjRnB0Ykd4YVEwazJaRWhLTVZwVGQybGpSMmgyWW0xV1ptSnVWblJaYlZaNVNXcHZhVXQ2VVRCTlZFbDZUa1JWTWs1Nlp6Vk5RMG81SWl3aWNISnZkR1ZqZEdWa0lqb2laWGxLYUdKSFkybFBhVXBHV2tWU1ZGRlRTamtpTENKemFXZHVZWFIxY21VaU9pSnVjMkkzZEZjMVNVUjFiRFpRVDA5MmJFeE5YMU5hUW5aMGVVaDFhVjlhZFRZMmIySkxha1ZzUWs1SldrNDJjREl4ZUhoNlMyTXlNVW94VUZkc1VVZzBNemhtUmpSQ2FVaENWVWxuWDFwc1JIZGtRMjlEWnlKOVhYMWRMQ0pxZEdraU9pSmhOREUwTVRWaE55MDVaR1U0TFRSak5EWXRPREkyTXkwME1UVmtNMlppWmpFeVptVWlMQ0pqYVdRaU9pSTFOamcwT0RkaVpDMDVNamN4TFRRelpHTXRPVFZoTUMwd05HUTBNR1F4WkdJek56RWlMQ0p6ZEdGMGRYTWlPaUpoWTJObGNIUmxaQ0lzSW5SNWNDSTZJbWxrWlc1MGFYUnBaWE11Wm1GamRITXVjWFZsY25rdWNtVnpjQ0lzSW1GMVpDSTZJakJtTmpGaFpqUTVORFpqTVRFeE5qTmhPRE0zWkRoaVpEaGtNbUU1WkRBMUlpd2liM0IwYVc5dWN5STZleUpzYjJOaGRHbHZibDlwWkNJNklpSXNJblpwYzJsMFgybGtJam9pTTJJNU1EYzJOamt0WVRneU55MDBOVEl3TFdGbFlqa3RPR1kzWXprMFpHTTVaamM1SW4wc0ltbHpjeUk2SWpnME1EazVOekkwTURZNElpd2ljM1ZpSWpvaU9EUXdPVGszTWpRd05qZ2lMQ0pwWVhRaU9pSXlNREl3TFRBNExUQTBWREUzT2pRME9qTXlXaUlzSW1WNGNDSTZJakl3TWpBdE1EZ3RNRGRVTVRjNk5EUTZNekphSW4wIiwicHJvdGVjdGVkIjoiZXlKaGJHY2lPaUpGWkVSVFFTSjkiLCJzaWduYXR1cmUiOiIzMkhRaUtLbjk0clFValFCNUVCN3ZBbWxyR3U5bjREaVdOaVNhSDRpV2kycndUZlllYjFXRDZWWEk1cWpCbUdQSjl6NGRqdUVlOXJmVDBvUXpNeDZBQSJ9'
-      await ms['processIncommingMessage'](c, 0, '1:1')
+      await ms['processIncommingMessage'](Buffer.from(c), 0, '1:1')
 
       await Promise.all([subscription])
     })
@@ -101,7 +107,7 @@ describe('messaging', () => {
 
       let c =
         'eyJwYXlsb2FkIjoiZXlKemRHRjBkWE1pT2lKaFkyTmxjSFJsWkNJc0luTjFZaUk2SWpnME1EazVOekkwTURZNElpd2lZWFZrSWpvaU1HWTJNV0ZtTkRrME5tTXhNVEUyTTJFNE16ZGtPR0prT0dReVlUbGtNRFVpTENKcGMzTWlPaUk0TkRBNU9UY3lOREEyT0NJc0ltTmhiR3hpWVdOcklqcHVkV3hzTENKcFlYUWlPaUl5TURJd0xUQTRMVEExVkRBM09qVXhPalF6V2lJc0ltVjRjQ0k2SWpJd01qQXRNRGd0TURoVU1EYzZOVEU2TkROYUlpd2lhblJwSWpvaU5qa3dNekkwTVdZdE9EQTJaaTAwWVRCaUxUazRNR1l0TjJNd01qQTVNMll4TVRJeElpd2lZMmxrSWpvaU5EQXpZVEF4TnpFdE9XUmpNQzAwWWpFMUxUa3dNR1l0TkRnNFlXVTBaR1poTVdWaklpd2laR1YyYVdObFgybGtJam9pWkVOWE5IcDBZbkZVU1drNFYxaHZRMUV3ZEVKa2RDSXNJblI1Y0NJNkltbGtaVzUwYVhScFpYTXVZWFYwYUdWdWRHbGpZWFJsTG5KbGMzQWlmUSIsInByb3RlY3RlZCI6ImV5SmhiR2NpT2lKRlpFUlRRU0o5Iiwic2lnbmF0dXJlIjoiSndUUm5hVlRqMlY0V0hMRF9aN1RVUWFnZWczMFZVdnhZQmZaSUZ4Q2FZMklQUHhnVnVncTRuT1QzTUdiTkhBakhPbGZtU0dla2dhRzkyV0dJOUhnQlEifQ=='
-      await ms['processIncommingMessage'](c, 0, '1:1')
+      await ms['processIncommingMessage'](Buffer.from(c), 0, '1:1')
 
       await Promise.all([subscription])
     })
@@ -122,7 +128,7 @@ describe('messaging', () => {
 
       let c =
         'eyJwYXlsb2FkIjoiZXlKbVlXTjBjeUk2VzNzaVptRmpkQ0k2SW5Cb2IyNWxYMjUxYldKbGNpSXNJbUYwZEdWemRHRjBhVzl1Y3lJNlczc2ljR0Y1Ykc5aFpDSTZJbVY1U25Ga1IydHBUMmxKTWs5SFNtaFBWRkV6VFhrd2QwMXFTbTFNVkZKcFRtcEZkRTlYV1RKWlV6QTFUa1JaTlU5WFdUVlBWMXB0V1RKRmFVeERTbnBrVjBscFQybEpORTVFUVRWUFZHTjVUa1JCTWs5RFNYTkpiV3g2WTNsSk5rbHVUbXhpUjFwbVpHMVdlV0ZYV25CWk1rWXdZVmM1ZFVscGQybGhWMFl3U1dwdmFVMXFRWGxOUXpCM1Rua3dlVTlXVVhkUFJHOTRUVlJ2ZUU1RE5EUk5WR3QzVFdwTk5FNXFVbUZKYVhkcFl6STVNV050VG14SmFtOXBaRmhPYkdOc09YcGpSMVpxWVZkYWNGcFhVV2xNUTBveVdsaEtjRnB0Ykd4YVEwazJaRWhLTVZwVGQybGpSMmgyWW0xV1ptSnVWblJaYlZaNVNXcHZhVXQ2VVRCTlZFbDZUa1JWTWs1Nlp6Vk5RMG81SWl3aWNISnZkR1ZqZEdWa0lqb2laWGxLYUdKSFkybFBhVXBHV2tWU1ZGRlRTamtpTENKemFXZHVZWFIxY21VaU9pSnVjMkkzZEZjMVNVUjFiRFpRVDA5MmJFeE5YMU5hUW5aMGVVaDFhVjlhZFRZMmIySkxha1ZzUWs1SldrNDJjREl4ZUhoNlMyTXlNVW94VUZkc1VVZzBNemhtUmpSQ2FVaENWVWxuWDFwc1JIZGtRMjlEWnlKOVhYMWRMQ0pxZEdraU9pSmhOREUwTVRWaE55MDVaR1U0TFRSak5EWXRPREkyTXkwME1UVmtNMlppWmpFeVptVWlMQ0pqYVdRaU9pSTFOamcwT0RkaVpDMDVNamN4TFRRelpHTXRPVFZoTUMwd05HUTBNR1F4WkdJek56RWlMQ0p6ZEdGMGRYTWlPaUpoWTJObGNIUmxaQ0lzSW5SNWNDSTZJbWxrWlc1MGFYUnBaWE11Wm1GamRITXVjWFZsY25rdWNtVnpjQ0lzSW1GMVpDSTZJakJtTmpGaFpqUTVORFpqTVRFeE5qTmhPRE0zWkRoaVpEaGtNbUU1WkRBMUlpd2liM0IwYVc5dWN5STZleUpzYjJOaGRHbHZibDlwWkNJNklpSXNJblpwYzJsMFgybGtJam9pTTJJNU1EYzJOamt0WVRneU55MDBOVEl3TFdGbFlqa3RPR1kzWXprMFpHTTVaamM1SW4wc0ltbHpjeUk2SWpnME1EazVOekkwTURZNElpd2ljM1ZpSWpvaU9EUXdPVGszTWpRd05qZ2lMQ0pwWVhRaU9pSXlNREl3TFRBNExUQTBWREUzT2pRME9qTXlXaUlzSW1WNGNDSTZJakl3TWpBdE1EZ3RNRGRVTVRjNk5EUTZNekphSW4wIiwicHJvdGVjdGVkIjoiZXlKaGJHY2lPaUpGWkVSVFFTSjkiLCJzaWduYXR1cmUiOiIzMkhRaUtLbjk0clFValFCNUVCN3ZBbWxyR3U5bjREaVdOaVNhSDRpV2kycndUZlllYjFXRDZWWEk1cWpCbUdQSjl6NGRqdUVlOXJmVDBvUXpNeDZBQSJ9'
-      await ms['processIncommingMessage'](c, 0, '1:1')
+      await ms['processIncommingMessage'](Buffer.from(c), 0, '1:1')
 
       await Promise.all([subscription])
       expect(count).toBeFalsy()
@@ -143,7 +149,7 @@ describe('messaging', () => {
       })
 
       let c = 'lol'
-      await ms['processIncommingMessage'](c, 0, '1:1')
+      await ms['processIncommingMessage'](Buffer.from(c), 0, '1:1')
 
       await Promise.all([subscription])
       expect(count).toBeFalsy()
@@ -164,7 +170,7 @@ describe('messaging', () => {
 
       let c =
         'eyJwYXlsb2FkIjoiZXlKemRHRjBkWE1pT2lKaFkyTmxjSFJsWkNJc0luTjFZaUk2SWpJMk56UXlOamM0TVRVMUlpd2lZWFZrSWpvaU9UQmlNRGRoWm1NdE56SXlZUzAwWkdSbUxUZ3paakV0TkRZME9USTFNelZpTURJNElpd2lhWE56SWpvaU1qWTNOREkyTnpneE5UVWlMQ0pqWVd4c1ltRmpheUk2Ym5Wc2JDd2lhV0YwSWpvaU1qQXlNUzB3TXkwd00xUXhOem93T0RvME5Wb2lMQ0psZUhBaU9pSXlNREl4TFRBekxUQTJWREUzT2pBNE9qUTFXaUlzSW1wMGFTSTZJakpoTkdKaFptVmlMV016TkRjdE5EUXlNeTFpWXpFNUxXWmtOR1EyTm1WbVpERm1PU0lzSW1OcFpDSTZJakF4WTJGalltVXhMVEUxWVRndE5EWmhZeTFoWVdKbExUWXlNbU14WXpZeU5UQmlNQ0lzSW1SbGRtbGpaVjlwWkNJNkltTnFTekIxVTAxWVVXcExaV0ZMUjJGcFltdFdSMW9pTENKMGVYQWlPaUpwWkdWdWRHbDBhV1Z6TG1GMWRHaGxiblJwWTJGMFpTNXlaWE53SW4wIiwicHJvdGVjdGVkIjoiZXlKaGJHY2lPaUpGWkVSVFFTSXNJbXRwWkNJNklqZzJZbVkwTTJJNVpESmhORGRrTXpVelpUZzRZV016WmprM01XTTJZamhsTURsbU1HUXlPV05sTnpOaVlXWm1aVFU1TWpjMU1HWXdOamRoTlRZeFlUa2lmUSIsInNpZ25hdHVyZSI6InFqOXcyMVNnVTFtbjJBNWFTQlVfNTh1MWN0MnA5ZnkyVzNKdVlIbDMxbUNpQUZfbGxyNjJxZU5Gd1Zaa1dfNEROMDBiaWtCb2hNRWhRQktyY01Sd0NBIn0'
-      await ms['processIncommingMessage'](c, 0, '1:1')
+      await ms['processIncommingMessage'](Buffer.from(c, 'base64'), 0, '1:1')
 
       let r = ms.requests.get(cid)
       expect(r.responded).toBeTruthy()
@@ -200,16 +206,17 @@ describe('messaging', () => {
 
       mockServer.on('connection', socket => {
         socket.on('message', async input => {
-          let msg = Message.deserializeBinary(input.valueOf() as Uint8Array)
+          let buf = new flatbuffers.ByteBuffer(input.valueOf() as Uint8Array)
+          let msg = auth.SelfMessaging.Auth.getRootAsAuth(buf)
 
-          expect(msg.getType()).toEqual(MsgType.AUTH)
+          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.AUTH)
 
           // Stop listening for response
-          let req = ms.requests.get(msg.getId())
+          let req = ms.requests.get(msg.id())
           req.acknowledged = true
           req.responded = true
 
-          ms.requests.set(msg.getId(), req)
+          ms.requests.set(msg.id(), req)
         })
         socket.on('close', () => {})
       })
@@ -337,10 +344,24 @@ describe('messaging', () => {
     it('type acknowledge', async () => {
       const consoleSpy = jest.spyOn(ms.logger, 'debug').mockImplementation(() => {})
 
-      let msg = new Message()
-      msg.setId('cid')
-      msg.setType(MsgType.ACK)
-      await ms['onmessage'](msg)
+      let builder = new flatbuffers.Builder(1024)
+
+      let rid = builder.createString('cid')
+
+      notification.SelfMessaging.Notification.startNotification(builder)
+      notification.SelfMessaging.Notification.addId(builder, rid)
+      notification.SelfMessaging.Notification.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACK)
+
+      let ack = notification.SelfMessaging.Notification.endNotification(builder)
+
+      builder.finish(ack)
+
+      let buf = builder.asUint8Array()
+
+      let tbuf = new flatbuffers.ByteBuffer(buf)
+      let hdr = header.SelfMessaging.Header.getRootAsHeader(tbuf)
+
+      await ms['onmessage'](hdr, buf)
 
       expect(consoleSpy).toHaveBeenCalledWith('acknowledged cid')
     })
@@ -348,23 +369,52 @@ describe('messaging', () => {
     it('type ACL', async () => {
       const consoleSpy = jest.spyOn(ms.logger, 'debug').mockImplementation(() => {})
 
-      let msg = new Message()
-      msg.setId('cid')
-      msg.setType(MsgType.ACL)
+      let builder = new flatbuffers.Builder(1024)
+
+      let rid = builder.createString('cid')
+
+      acl.SelfMessaging.ACL.startACL(builder)
+      acl.SelfMessaging.ACL.addId(builder, rid)
+      acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
+
+      let ack = acl.SelfMessaging.ACL.endACL(builder)
+
+      builder.finish(ack)
+
+      let buf = builder.asUint8Array()
+
+      let tbuf = new flatbuffers.ByteBuffer(buf)
+      let hdr = header.SelfMessaging.Header.getRootAsHeader(tbuf)
+
       try {
-        await ms['onmessage'](msg)
+        await ms['onmessage'](hdr, buf)
       } catch (error) {
         expect(consoleSpy).toHaveBeenCalledWith('ACL cid')
       }
     })
+
     it('type MSG', async () => {
       const consoleSpy = jest.spyOn(ms.logger, 'debug').mockImplementation(() => {})
 
-      let msg = new Message()
-      msg.setId('cid')
-      msg.setType(MsgType.MSG)
+      let builder = new flatbuffers.Builder(1024)
+
+      let rid = builder.createString('cid')
+
+      message.SelfMessaging.Message.startMessage(builder)
+      message.SelfMessaging.Message.addId(builder, rid)
+      message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
+
+      let msg = message.SelfMessaging.Message.endMessage(builder)
+
+      builder.finish(msg)
+
+      let buf = builder.asUint8Array()
+
+      let tbuf = new flatbuffers.ByteBuffer(buf)
+      let hdr = header.SelfMessaging.Header.getRootAsHeader(tbuf)
+
       try {
-        await ms['onmessage'](msg)
+        await ms['onmessage'](hdr, buf)
       } catch (error) {
         expect(consoleSpy).toHaveBeenCalledWith('message received cid')
       }

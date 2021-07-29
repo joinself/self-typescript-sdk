@@ -14,12 +14,14 @@ import IdentityService from './identity-service'
 import Jwt from './jwt'
 import Messaging from './messaging'
 import Fact from './fact'
-import { MsgType } from 'self-protos/msgtype_pb'
-import { Message } from 'self-protos/message_pb'
+import * as message from './msgproto/message_generated'
+import * as mtype from './msgproto/types_generated'
 import FactResponse from './fact-response'
 import MessagingService from './messaging-service'
 import Crypto from './crypto'
 import { logging, Logger } from './logging'
+
+import * as flatbuffers from 'flatbuffers'
 
 type MessageProcessor = (n: number) => any
 const logger = logging.getLogger('core.self-sdk')
@@ -95,7 +97,7 @@ export default class FactsService {
     var msgs = []
     for (var i = 0; i < devices.length; i++) {
       var msg = await this.buildEnvelope(id, selfid, devices[i], ciphertext)
-      msgs.push(msg.serializeBinary())
+      msgs.push(msg)
     }
 
     if (as) {
@@ -120,25 +122,45 @@ export default class FactsService {
     id: string,
     selfid: string,
     device: string,
-    ciphertext: string
-  ): Promise<Message> {
-    const msg = new Message()
-    msg.setType(MsgType.MSG)
-    msg.setId(id)
-    msg.setSender(`${this.jwt.appID}:${this.jwt.deviceID}`)
-    msg.setRecipient(`${selfid}:${device}`)
-    let ct = await this.crypto.encrypt(ciphertext, [{
+    plaintext: string
+  ): Promise<Uint8Array> {
+    let ciphertext = await this.crypto.encrypt(plaintext, [{
       id: selfid,
       device: device,
     }])
-    msg.setCiphertext(this.fixEncryption(ct))
 
-    return msg
+    let builder = new flatbuffers.Builder(1024)
+
+    let rid = builder.createString(id)
+    let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
+    let rcp = builder.createString(`${selfid}:${device}`)
+    let ctx = message.SelfMessaging.Message.createCiphertextVector(
+      builder,
+      Buffer.from(ciphertext)
+    )
+
+    message.SelfMessaging.Message.startMessage(builder)
+    message.SelfMessaging.Message.addId(builder, rid)
+    message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
+    message.SelfMessaging.Message.addSender(builder, snd)
+    message.SelfMessaging.Message.addRecipient(builder, rcp)
+    message.SelfMessaging.Message.addCiphertext(builder, ctx)
+
+    message.SelfMessaging.Message.addMetadata(builder,
+      message.SelfMessaging.Metadata.createMetadata(
+        builder,
+        flatbuffers.createLong(0, 0),
+        flatbuffers.createLong(0, 0)
+      )
+    )
+
+    let msg = message.SelfMessaging.Message.endMessage(builder)
+
+    builder.finish(msg)
+
+    return builder.asUint8Array()
   }
 
-  fixEncryption(msg: string): any {
-    return Buffer.from(msg)
-  }
   /**
    * Sends a request via an intermediary
    * @param selfid user identifier to send the fact request.
@@ -181,7 +203,7 @@ export default class FactsService {
     var msgs = []
     for (var i = 0; i < devices.length; i++) {
       var msg = await this.buildEnvelope(id, intermediary, devices[i], ciphertext)
-      msgs.push(msg.serializeBinary())
+      msgs.push(msg)
     }
 
     logger.debug(`requesting ${j.cid}`)

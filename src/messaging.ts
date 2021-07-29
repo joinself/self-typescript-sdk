@@ -3,15 +3,19 @@
 import Jwt from './jwt'
 import IdentityService from './identity-service'
 
-import { Auth } from 'self-protos/auth_pb'
-import { MsgType } from 'self-protos/msgtype_pb'
-import { Message } from 'self-protos/message_pb'
+import * as acl from './msgproto/acl_generated'
+import * as auth from './msgproto/auth_generated'
+import * as header from './msgproto/header_generated'
+import * as message from './msgproto/message_generated'
+import * as notification from './msgproto/notification_generated'
+import * as mtype from './msgproto/types_generated'
 import Crypto from './crypto'
 import FactResponse from './fact-response'
 
 import * as fs from 'fs'
 import { openStdin } from 'process'
 import { v4 as uuidv4 } from 'uuid'
+import * as flatbuffers from 'flatbuffers'
 import { Identity, App } from './identity-service'
 import { logging, Logger } from './logging'
 
@@ -88,9 +92,8 @@ export default class Messaging {
     await this.authenticate()
   }
 
-  private async processIncommingMessage(input: string, offset: number, sender: string) {
+  private async processIncommingMessage(ciphertext: Uint8Array, offset: number, sender: string) {
     try {
-      let ciphertext = Buffer.from(input, 'base64').toString()
       let issuer = sender.split(':')
 
       let plaintext = await this.encryptionClient.decrypt(ciphertext, issuer[0], issuer[1])
@@ -171,17 +174,18 @@ export default class Messaging {
     }
   }
 
-  private async onmessage(msg: Message) {
-    this.logger.debug(`received ${msg.getId()} (${msg.getType()})`)
-    switch (msg.getType()) {
-      case MsgType.ERR: {
-        let ma = msg.toArray()
-        // this.logger.warn(`error processing ${msg.getId()} ${ma[ma.length - 1]}`)
+  private async onmessage(hdr: header.SelfMessaging.Header, data: Uint8Array) {
+    this.logger.debug(`received ${hdr.id()} (${hdr.msgtype()})`)
+    switch (hdr.msgtype()) {
+      case mtype.SelfMessaging.MsgType.ERR: {
+        let buf = new flatbuffers.ByteBuffer(data)
+        let ntf = notification.SelfMessaging.Notification.getRootAsNotification(buf);
+
         let sw = 0
         Array.from(this.requests.keys()).forEach(key => {
-          if (this.requests.get(key).uuid == msg.getId()) {
+          if (this.requests.get(key).uuid == ntf.id()) {
             let r = this.requests.get(key)
-            r.response = { errorMessage: ma[ma.length - 1] }
+            r.response = { errorMessage: ntf.error() }
             r.acknowledged = true
             r.responded = true
             this.requests.set(key, r)
@@ -194,25 +198,35 @@ export default class Messaging {
         }
 
         this.logger.debug("error message received")
-        this.logger.warn(msg.toString());
+        this.logger.warn(ntf.error());
         break
       }
-      case MsgType.ACK: {
-        this.logger.debug(`acknowledged ${msg.getId()}`)
-        this.mark_as_acknowledged(msg.getId())
+      case mtype.SelfMessaging.MsgType.ACK: {
+        this.logger.debug(`acknowledged ${hdr.id()}`)
+        this.mark_as_acknowledged(hdr.id())
         break
       }
-      case MsgType.ACL: {
-        this.logger.debug(`ACL ${msg.getId()}`)
-        this.processIncommingACL(msg.getId(), msg.getRecipient())
+      case mtype.SelfMessaging.MsgType.ACL: {
+        this.logger.debug(`ACL ${hdr.id()}`)
+
+        let buf = new flatbuffers.ByteBuffer(data)
+        let resp = acl.SelfMessaging.ACL.getRootAsACL(buf)
+
+        this.processIncommingACL(resp.id(), Buffer.from(resp.payloadArray()).toString())
         break
       }
-      case MsgType.MSG: {
-        this.logger.debug(`message received ${msg.getId()}`)
+      case mtype.SelfMessaging.MsgType.MSG: {
+        this.logger.debug(`message received ${hdr.id()}`)
+
+        let buf = new flatbuffers.ByteBuffer(data)
+        let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+
         await this.processIncommingMessage(
-          msg.getCiphertext_asB64(),
-          msg.getOffset(),
-          msg.getSender()
+          Buffer.from(msg.ciphertextArray()),
+          // TODO : this will overflow at 1<<32 - 1
+          // we should treat this as a 64 bit int
+          msg.metadata(null).offset().low,
+          msg.sender()
         )
         break
       }
@@ -236,30 +250,43 @@ export default class Messaging {
       if (this.connected === true) {
         this.connected = false;
         this.logger.debug(`reconnecting...`)
-        this.ws = undefined;
-        this.setup();
+        this.ws = undefined
+        this.setup()
       }
     }
 
-    this.ws.onmessage = async input => {
-      let msg = Message.deserializeBinary(input.data)
-      await this.onmessage(msg)
+    this.ws.onmessage = async event => {
+      let buf = new flatbuffers.ByteBuffer(event.data)
+      let hdr = header.SelfMessaging.Header.getRootAsHeader(buf)
+      await this.onmessage(hdr, event.data)
     }
   }
 
   private async authenticate() {
+    let id = uuidv4()
     let token = this.jwt.authToken()
 
-    const msg = new Auth()
-    msg.setType(MsgType.AUTH)
-    msg.setId(uuidv4())
-    msg.setToken(token)
-    msg.setOffset(this.getOffset())
-    msg.setDevice(this.jwt.deviceID)
+    let builder = new flatbuffers.Builder(1024)
 
-    await this.send_and_wait(msg.getId(), {
-      data: msg.serializeBinary(),
-      uuid: msg.getId()
+    let rid = builder.createString(id)
+    let tkn = builder.createString(token)
+    let did = builder.createString(this.jwt.deviceID)
+
+    auth.SelfMessaging.Auth.startAuth(builder)
+    auth.SelfMessaging.Auth.addId(builder, rid)
+    auth.SelfMessaging.Auth.addMsgtype(builder, mtype.SelfMessaging.MsgType.AUTH)
+    auth.SelfMessaging.Auth.addDevice(builder, did)
+    auth.SelfMessaging.Auth.addToken(builder, tkn)
+    auth.SelfMessaging.Auth.addOffset(builder, flatbuffers.createLong(this.getOffset(), 0))
+    let authReq = auth.SelfMessaging.Auth.endAuth(builder)
+
+    builder.finish(authReq)
+
+    let buf = builder.asUint8Array()
+
+    await this.send_and_wait(id, {
+      data: buf,
+      uuid: id
     })
   }
 

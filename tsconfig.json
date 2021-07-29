@@ -21,6 +21,6 @@
     ]
   },
   "include": [
-    "src", "generated"
+    "src", "src/msgproto", "generated"
   ]
 }

@@ -33,7 +33,7 @@ export default class SelfSDK {
   private encryptionClient: Crypto
 
   defaultBaseURL = 'https://api.joinself.com'
-  defaultMessagingURL = 'wss://messaging.joinself.com/v1/messaging'
+  defaultMessagingURL = 'wss://messaging.joinself.com/v2/messaging'
 
   /**
    * Use static build method to create your SDK
@@ -226,7 +226,7 @@ export default class SelfSDK {
       return opts.messagingURL
     }
     if (opts.env) {
-      return `wss://messaging.${opts.env}.joinself.com/v1/messaging`
+      return `wss://messaging.${opts.env}.joinself.com/v2/messaging`
     }
 
     return this.defaultMessagingURL

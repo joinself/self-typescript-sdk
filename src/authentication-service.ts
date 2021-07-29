@@ -14,11 +14,14 @@ import Jwt from './jwt'
 import IdentityService from './identity-service'
 import Messaging from './messaging'
 
-import { MsgType } from 'self-protos/msgtype_pb'
-import { Message } from 'self-protos/message_pb'
+import * as message from './msgproto/message_generated'
+import * as mtype from './msgproto/types_generated'
+
 import MessagingService from './messaging-service'
 import Crypto from './crypto'
 import { logging, Logger } from './logging'
+
+import * as flatbuffers from 'flatbuffers'
 
 type MessageProcessor = (n: number) => any
 
@@ -97,12 +100,12 @@ export default class AuthenticationService {
     let devices = await this.is.devices(selfid)
 
     let j = this.buildRequest(selfid, opts)
-    let ciphertext = this.jwt.toSignedJson(j)
+    let plaintext = this.jwt.toSignedJson(j)
 
     var msgs = []
     for (var i = 0; i < devices.length; i++) {
-      var msg = await this.buildEnvelope(id, selfid, devices[i], ciphertext)
-      msgs.push(msg.serializeBinary())
+      var msg = await this.buildEnvelope(id, selfid, devices[i], plaintext)
+      msgs.push(msg)
     }
 
     if (as) {
@@ -124,25 +127,43 @@ export default class AuthenticationService {
     id: string,
     selfid: string,
     device: string,
-    ciphertext: string
-  ): Promise<Message> {
-    const msg = new Message()
-    msg.setType(MsgType.MSG)
-    msg.setId(id)
-    msg.setSender(`${this.jwt.appID}:${this.jwt.deviceID}`)
-    msg.setRecipient(`${selfid}:${device}`)
-    let ct = await this.crypto.encrypt(ciphertext, [{
+    plaintext: string
+  ): Promise<Uint8Array> {
+    let ciphertext = await this.crypto.encrypt(plaintext, [{
       id: selfid,
       device: device,
     }])
 
-    msg.setCiphertext(this.fixEncryption(ct))
+    let builder = new flatbuffers.Builder(1024)
 
-    return msg
-  }
+    let rid = builder.createString(id)
+    let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
+    let rcp = builder.createString(`${selfid}:${device}`)
+    let ctx = message.SelfMessaging.Message.createCiphertextVector(
+      builder,
+      Buffer.from(ciphertext)
+    )
 
-  fixEncryption(msg: string): any {
-    return Buffer.from(msg)
+    message.SelfMessaging.Message.startMessage(builder)
+    message.SelfMessaging.Message.addId(builder, rid)
+    message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
+    message.SelfMessaging.Message.addSender(builder, snd)
+    message.SelfMessaging.Message.addRecipient(builder, rcp)
+    message.SelfMessaging.Message.addCiphertext(builder, ctx)
+
+    message.SelfMessaging.Message.addMetadata(builder,
+      message.SelfMessaging.Metadata.createMetadata(
+        builder,
+        flatbuffers.createLong(0, 0),
+        flatbuffers.createLong(0, 0)
+      )
+    )
+    
+    let msg = message.SelfMessaging.Message.endMessage(builder)
+
+    builder.finish(msg)
+
+    return builder.asUint8Array()
   }
 
   /**
