@@ -212,7 +212,7 @@ export default class Messaging {
         let buf = new flatbuffers.ByteBuffer(data)
         let resp = acl.SelfMessaging.ACL.getRootAsACL(buf)
 
-        this.processIncommingACL(resp.id(), resp.payloadArray().toString())
+        this.processIncommingACL(resp.id(), Buffer.from(resp.payloadArray()).toString())
         break
       }
       case mtype.SelfMessaging.MsgType.MSG: {

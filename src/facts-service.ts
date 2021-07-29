@@ -136,7 +136,7 @@ export default class FactsService {
     let rcp = builder.createString(`${selfid}:${device}`)
     let ctx = message.SelfMessaging.Message.createCiphertextVector(
       builder,
-      ciphertext
+      Buffer.from(ciphertext)
     )
 
     message.SelfMessaging.Message.startMessage(builder)
