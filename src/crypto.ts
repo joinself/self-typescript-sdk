@@ -112,7 +112,7 @@ export default class Crypto {
     crypto.add_group_participant(group_session, `${sender}:${sender_device}`, session_with_bob)
 
     // 10) decrypt the message ciphertext
-    let plaintextext = crypto.group_decrypt(group_session, `${sender}:${sender_device}`, message)
+    let plaintextext = crypto.group_decrypt(group_session, `${sender}:${sender_device}`, Buffer.from(message).toString())
 
     // 11) store the session to a file
     let pickle = crypto.pickle_session(session_with_bob, this.storageKey)
@@ -145,7 +145,7 @@ export default class Crypto {
         //       you should extract the initial message from the group message intended
         //       for your account id.
 
-        let group_message_json = JSON.parse(message.toString())
+        let group_message_json = JSON.parse(Buffer.from(message).toString())
         let myID = `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
         let ciphertext = group_message_json['recipients'][myID]['ciphertext']
 

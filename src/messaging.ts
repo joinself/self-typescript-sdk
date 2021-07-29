@@ -222,7 +222,7 @@ export default class Messaging {
         let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
 
         await this.processIncommingMessage(
-          msg.ciphertextArray(),
+          Buffer.from(msg.ciphertextArray()),
           // TODO : this will overflow at 1<<32 - 1
           // we should treat this as a 64 bit int
           msg.metadata(null).offset().low,
