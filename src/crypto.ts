@@ -178,13 +178,14 @@ export default class Crypto {
           }
 
           // 7d-iii) post those keys to POST /v1/identities/<selfid>/devices/1/pre_keys/
-          let status = 0
-          do {
+          while(true) {
             let status = await this.client.postRaw(
               `${this.client.url}/v1/identities/${this.client.jwt.appID}/devices/${this.client.jwt.deviceID}/pre_keys`,
               keys
             )
-          } while(status != 200) // retry if the response is != 200
+            if (status == 200) break;
+            await new Promise(f => setTimeout(f, 1000)); // sleep
+          }
 
         }
 
