@@ -96,12 +96,12 @@ export default class Crypto {
     return ciphertext
   }
 
-  public decrypt(message: Uint8Array, sender: string, sender_device: string): string {
+  public async decrypt(message: Uint8Array, sender: string, sender_device: string): Promise<string> {
     const fs = require('fs')
     const crypto = require('self-crypto')
 
     let session_file_name = this.sessionPath(sender, sender_device)
-    let session_with_bob = this.getInboundSessionWithBob(message, session_file_name)
+    let session_with_bob = await this.getInboundSessionWithBob(message, session_file_name)
 
     // 8) create a group session and set the identity of the account you're using
     let group_session = crypto.create_group_session(
@@ -130,7 +130,7 @@ export default class Crypto {
   }
 
 
-  getInboundSessionWithBob(message: Uint8Array, session_file_name: string): any {
+  async getInboundSessionWithBob(message: Uint8Array, session_file_name: string): Promise<any> {
     const fs = require('fs')
     const crypto = require('self-crypto')
 
@@ -178,12 +178,15 @@ export default class Crypto {
           }
 
           // 7d-iii) post those keys to POST /v1/identities/<selfid>/devices/1/pre_keys/
-          this.client.postRaw(
-            `${this.client.url}/v1/identities/${this.client.jwt.appID}/devices/${this.client.jwt.deviceID}/pre_keys`,
-            keys
-          )
+          while(true) {
+            let status = await this.client.postRaw(
+              `${this.client.url}/v1/identities/${this.client.jwt.appID}/devices/${this.client.jwt.deviceID}/pre_keys`,
+              keys
+            )
+            if (status == 200) break;
+            await new Promise(f => setTimeout(f, 1000)); // sleep
+          }
 
-          // TODO: (@adriacidre) : retry if the response is != 200
         }
 
         // 7e-i) save the account state

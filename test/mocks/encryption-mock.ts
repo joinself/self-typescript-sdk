@@ -18,7 +18,7 @@ export default class EncryptionMock {
     return Buffer.from(message)
   }
 
-  public decrypt(message: Uint8Array, sender: string, sender_device: string): string {
+  public async decrypt(message: Uint8Array, sender: string, sender_device: string): Promise<string> {
     return message.toString()
   }
 
@@ -30,6 +30,6 @@ export default class EncryptionMock {
     return `/tmp/random-session.pickle`
   }
 
-  getInboundSessionWithBob(message: Uint8Array, session_file_name: string): any {}
+  async getInboundSessionWithBob(message: Uint8Array, session_file_name: string): Promise<any> {}
   async getOutboundSessionWithBob(recipient, recipientDevice, session_file_name: string): Promise<any> {}
 }
