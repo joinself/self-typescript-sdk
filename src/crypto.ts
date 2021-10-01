@@ -11,7 +11,7 @@ export default class Crypto {
   storageKey: string
   storageFolder: string
   path: string
-  account: Account
+  account: any
 
   constructor(client: IdentityService, device: string, storageFolder: string, storageKey: string) {
     this.client = client
