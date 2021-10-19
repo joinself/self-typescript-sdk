@@ -116,6 +116,14 @@ export default class MessagingService {
   }
 
   /**
+   * isConnected checks if messaging is actually connected or not.
+   * @returns bool
+   */
+  isConnected() {
+    return this.ms.connected
+  }
+
+  /**
    * Lists the current connections of your app.
    * @returns a list of ACL rules
    */
@@ -349,7 +357,7 @@ export default class MessagingService {
         flatbuffers.createLong(0, 0)
       )
     )
-    
+
     let msg = message.SelfMessaging.Message.endMessage(builder)
 
     builder.finish(msg)
