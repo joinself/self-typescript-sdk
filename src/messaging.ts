@@ -98,18 +98,22 @@ export default class Messaging {
 
       let plaintext = await this.encryptionClient.decrypt(ciphertext, issuer[0], issuer[1])
       let payload = JSON.parse(plaintext)
+      this.logger.debug(`decoding ${plaintext}`)
 
       const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
       let header = JSON.parse(decode(payload['protected']))
       let k = await this.is.publicKey(issuer[0], header['kid'])
 
+      this.logger.debug(`verifying message signature`)
       if (!this.jwt.verify(payload, k)) {
         this.logger.info(`received unverified message ${payload.cid}`)
         return
       }
 
       this.setOffset(offset)
+      this.logger.debug(`received payload ${payload['payload']}`)
       let p = JSON.parse(decode(payload['payload']))
+      this.logger.debug(`processing ${p.typ}`)
       switch (p.typ) {
         case 'identities.facts.query.resp': {
           await this.processResponse(p, 'identities.facts.query.resp')
@@ -123,6 +127,8 @@ export default class Messaging {
           if (this.callbacks.has(p.typ)) {
             let fn = this.callbacks.get(p.typ)
             fn(p)
+          } else {
+            this.logger.debug(`no callbacks setup ${p.typ}`)
           }
           break
         }
@@ -157,7 +163,7 @@ export default class Messaging {
     let list = JSON.parse(msg)
     let req = this.requests.get(id)
     if (!req) {
-      console.debug(`ACL request not found ${id}`)
+      this.logger.debug(`ACL request not found ${id}`)
       return
     }
 
@@ -202,13 +208,10 @@ export default class Messaging {
         break
       }
       case mtype.SelfMessaging.MsgType.ACK: {
-        this.logger.debug(`acknowledged ${hdr.id()}`)
         this.mark_as_acknowledged(hdr.id())
         break
       }
       case mtype.SelfMessaging.MsgType.ACL: {
-        this.logger.debug(`ACL ${hdr.id()}`)
-
         let buf = new flatbuffers.ByteBuffer(data)
         let resp = acl.SelfMessaging.ACL.getRootAsACL(buf)
 
@@ -216,10 +219,9 @@ export default class Messaging {
         break
       }
       case mtype.SelfMessaging.MsgType.MSG: {
-        this.logger.debug(`message received ${hdr.id()}`)
-
         let buf = new flatbuffers.ByteBuffer(data)
         let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+        this.logger.debug(`message "${hdr.id()}" received from ${msg.sender()}`)
 
         await this.processIncommingMessage(
           Buffer.from(msg.ciphertextArray()),
