@@ -2,6 +2,7 @@
 
 import IdentityService from '../../src/identity-service'
 import { Recipient } from '../../src/crypto';
+import { logging, Logger } from '../../src/logging'
 
 export default class EncryptionMock {
   client: IdentityService
@@ -10,6 +11,7 @@ export default class EncryptionMock {
   storageFolder: string
   path: string
   account: Account
+  logger: Logger
 
   public async encrypt(
     message: string,

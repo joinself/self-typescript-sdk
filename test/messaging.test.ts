@@ -341,57 +341,6 @@ describe('messaging', () => {
   })
 
   describe('onmessage', () => {
-    it('type acknowledge', async () => {
-      const consoleSpy = jest.spyOn(ms.logger, 'debug').mockImplementation(() => {})
-
-      let builder = new flatbuffers.Builder(1024)
-
-      let rid = builder.createString('cid')
-
-      notification.SelfMessaging.Notification.startNotification(builder)
-      notification.SelfMessaging.Notification.addId(builder, rid)
-      notification.SelfMessaging.Notification.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACK)
-
-      let ack = notification.SelfMessaging.Notification.endNotification(builder)
-
-      builder.finish(ack)
-
-      let buf = builder.asUint8Array()
-
-      let tbuf = new flatbuffers.ByteBuffer(buf)
-      let hdr = header.SelfMessaging.Header.getRootAsHeader(tbuf)
-
-      await ms['onmessage'](hdr, buf)
-
-      expect(consoleSpy).toHaveBeenCalledWith('acknowledged cid')
-    })
-
-    it('type ACL', async () => {
-      const consoleSpy = jest.spyOn(ms.logger, 'debug').mockImplementation(() => {})
-
-      let builder = new flatbuffers.Builder(1024)
-
-      let rid = builder.createString('cid')
-
-      acl.SelfMessaging.ACL.startACL(builder)
-      acl.SelfMessaging.ACL.addId(builder, rid)
-      acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
-
-      let ack = acl.SelfMessaging.ACL.endACL(builder)
-
-      builder.finish(ack)
-
-      let buf = builder.asUint8Array()
-
-      let tbuf = new flatbuffers.ByteBuffer(buf)
-      let hdr = header.SelfMessaging.Header.getRootAsHeader(tbuf)
-
-      try {
-        await ms['onmessage'](hdr, buf)
-      } catch (error) {
-        expect(consoleSpy).toHaveBeenCalledWith('ACL cid')
-      }
-    })
 
     it('type MSG', async () => {
       const consoleSpy = jest.spyOn(ms.logger, 'debug').mockImplementation(() => {})
@@ -416,7 +365,7 @@ describe('messaging', () => {
       try {
         await ms['onmessage'](hdr, buf)
       } catch (error) {
-        expect(consoleSpy).toHaveBeenCalledWith('message received cid')
+        expect(consoleSpy).toHaveBeenCalledWith('message \"cid\" received from null')
       }
     })
   })
