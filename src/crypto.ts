@@ -152,7 +152,12 @@ export default class Crypto {
     let session_with_bob: any
     this.logger.debug(`getting inbound session wit bob ${session_file_name}`)
 
-    if (fs.existsSync(session_file_name)) {
+    let group_message_json = JSON.parse(Buffer.from(message).toString())
+    let myID = `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
+    let mtype = group_message_json['recipients'][myID]['mtype']
+    let ciphertext = group_message_json['recipients'][myID]['ciphertext']
+
+    if (fs.existsSync(session_file_name) && mtype === 1) {
         // 7a) if bobs's session file exists load the pickle from the file
         this.logger.debug(` bobs's session file exists load the pickle from the file`)
         let session = fs.readFileSync(session_file_name)
@@ -162,11 +167,6 @@ export default class Crypto {
         // 7b-i) if you have not previously sent or received a message to/from bob,
         //       you should extract the initial message from the group message intended
         //       for your account id.
-
-        let group_message_json = JSON.parse(Buffer.from(message).toString())
-        let myID = `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
-        let ciphertext = group_message_json['recipients'][myID]['ciphertext']
-
         this.logger.debug(` use the initial message to create a session for bob or carol`)
         // 7b-ii) use the initial message to create a session for bob or carol
         session_with_bob = crypto.create_inbound_session(this.account, ciphertext)
