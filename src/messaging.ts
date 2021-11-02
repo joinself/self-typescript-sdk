@@ -88,6 +88,7 @@ export default class Messaging {
 
   private async setup() {
     this.logger.debug('setting up messaging')
+
     await this.wait_for_connection()
     await this.authenticate()
   }
@@ -244,6 +245,7 @@ export default class Messaging {
     }
 
     this.ws.onopen = () => {
+      this.logger.debug(`connected`)
       this.connected = true
     }
 
@@ -253,6 +255,10 @@ export default class Messaging {
         this.connected = false;
         this.logger.debug(`reconnecting...`)
         this.ws = undefined
+        if (this.url !== '') {
+          this.connect()
+        }
+
         this.setup()
       }
     }
@@ -388,6 +394,7 @@ export default class Messaging {
   private wait_for_connection(): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
       while (!this.connected) {
+        this.logger.debug("waiting for connection")
         await this.delay(100)
       }
       resolve(true)
