@@ -35,6 +35,7 @@ export default class MessagingService {
   jwt: Jwt
   crypto: Crypto
   connections: string[]
+  logger: Logger
 
   /**
    * constructs a MessagingService
@@ -48,6 +49,7 @@ export default class MessagingService {
     this.is = is
     this.crypto = ec
     this.connections = []
+    this.logger = logging.getLogger('core.self-sdk')
   }
 
   /**
@@ -257,11 +259,11 @@ export default class MessagingService {
     let recipients:Recipient[] = []
 
     // Send the message to all recipient devices.
-    if (recipient != this.jwt.appID) {
-      console.log("sending to a different identity")
-      for (var k = 0; k < recipientIDs.length; k++) {
+    for (var k = 0; k < recipientIDs.length; k++) {
+      if (recipientIDs[k] != this.jwt.appID) {
         let devices = await this.is.devices(recipientIDs[k])
         for (var i = 0; i < devices.length; i++) {
+          this.logger.debug(`adding recipient ${recipientIDs[k]}:${devices[i]}`)
           recipients.push({
             id: recipientIDs[k],
             device: devices[i]
@@ -274,6 +276,7 @@ export default class MessagingService {
     let currentIdentityDevices = await this.is.devices(this.jwt.appID)
     for (var i = 0; i < currentIdentityDevices.length; i++) {
       if (currentIdentityDevices[i] != this.jwt.deviceID) {
+        this.logger.debug(`adding recipient ${recipientIDs[k]}:${currentIdentityDevices[i]}`)
         recipients.push({
           id: this.jwt.appID,
           device: currentIdentityDevices[i]
