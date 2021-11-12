@@ -113,7 +113,7 @@ export default class Messaging {
 
       this.setOffset(offset)
       this.logger.debug(`received payload ${payload['payload']}`)
-      let p = JSON.parse(decode(payload['payload']))
+      let p = JSON.parse(Buffer.from(payload['payload'], 'base64').toString('utf8'))
       this.logger.debug(`processing ${p.typ}`)
       switch (p.typ) {
         case 'identities.facts.query.resp': {
