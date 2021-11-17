@@ -83,16 +83,17 @@ export default class Crypto {
     this.logger.debug('managing sessions with all recipients')
     for (var i = 0; i < recipients.length; i++) {
       let session_file_name = this.sessionPath(recipients[i].id, recipients[i].device)
-      let session_with_bob = await this.getOutboundSessionWithBob(recipients[i].id, recipients[i].device, session_file_name)
-
+      let session_with_bob = null
       try {
-        this.logger.debug(`  adding group participant ${recipients[i].id}:${recipients[i].device}`)
-        crypto.add_group_participant(group_session, `${recipients[i].id}:${recipients[i].device}`, session_with_bob)
-        sessions[session_file_name] = session_with_bob
+        session_with_bob = await this.getOutboundSessionWithBob(recipients[i].id, recipients[i].device, session_file_name)
       } catch (error) {
         this.logger.warn(`  there is a problem adding group participant ${recipients[i].id}:${recipients[i].device}, skipping...`)
         this.logger.warn(error)
       }
+
+      this.logger.debug(`  adding group participant ${recipients[i].id}:${recipients[i].device}`)
+      crypto.add_group_participant(group_session, `${recipients[i].id}:${recipients[i].device}`, session_with_bob)
+      sessions[session_file_name] = session_with_bob
     }
 
     // 5) encrypt a message
@@ -125,13 +126,8 @@ export default class Crypto {
     )
 
     // 9) add all recipients and their sessions
-    try {
-      this.logger.debug(`add all recipients and their sessions ${sender}:${sender_device}`)
-      crypto.add_group_participant(group_session, `${sender}:${sender_device}`, session_with_bob)
-    } catch (error) {
-      this.logger.warn(`  there is a problem adding group participant ${sender}:${sender_device}, skipping...`)
-      this.logger.warn(error)
-    }
+    this.logger.debug(`add all recipients and their sessions ${sender}:${sender_device}`)
+    crypto.add_group_participant(group_session, `${sender}:${sender_device}`, session_with_bob)
 
     // 10) decrypt the message ciphertext
     this.logger.debug(`decrypt the message ciphertext`)
@@ -236,11 +232,14 @@ export default class Crypto {
 
     let session_with_bob: any
 
+    this.logger.debug(`getting outbound session with bob`)
     if (fs.existsSync(session_file_name)) {
         // 2a) if bob's session file exists load the pickle from the file
+        this.logger.debug(`  bob's session file exists load the pickle from the file`)
         let session = fs.readFileSync(session_file_name)
         session_with_bob = crypto.unpickle_session(session.toString(), this.storageKey)
       } else {
+        this.logger.debug(`  get bob's prekeys`)
         // 2b-i) if you have not previously sent or recevied a message to/from bob,
         //       you must get his identity key from GET /v1/identities/bob/
         let ed25519_identity_key = await this.client.devicePublicKey(recipient, recipientDevice)
