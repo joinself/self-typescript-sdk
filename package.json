@@ -1,7 +1,7 @@
 {
   "name": "self-sdk",
   "type": "mod",
-  "version": "0.0.52",
+  "version": "0.0.53",
   "description": "",
   "keywords": [],
   "main": "dist/self-sdk.umd.js",

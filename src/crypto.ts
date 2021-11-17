@@ -89,6 +89,7 @@ export default class Crypto {
       } catch (error) {
         this.logger.warn(`  there is a problem adding group participant ${recipients[i].id}:${recipients[i].device}, skipping...`)
         this.logger.warn(error)
+        continue
       }
 
       this.logger.debug(`  adding group participant ${recipients[i].id}:${recipients[i].device}`)
