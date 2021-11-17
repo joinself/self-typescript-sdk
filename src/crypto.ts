@@ -85,10 +85,14 @@ export default class Crypto {
       let session_file_name = this.sessionPath(recipients[i].id, recipients[i].device)
       let session_with_bob = await this.getOutboundSessionWithBob(recipients[i].id, recipients[i].device, session_file_name)
 
-      this.logger.debug(`  adding group participand ${recipients[i].id}:${recipients[i].device}`)
-      crypto.add_group_participant(group_session, `${recipients[i].id}:${recipients[i].device}`, session_with_bob)
-
-      sessions[session_file_name] = session_with_bob
+      try {
+        this.logger.debug(`  adding group participant ${recipients[i].id}:${recipients[i].device}`)
+        crypto.add_group_participant(group_session, `${recipients[i].id}:${recipients[i].device}`, session_with_bob)
+        sessions[session_file_name] = session_with_bob
+      } catch (error) {
+        this.logger.warn(`  there is a problem adding group participant ${recipients[i].id}:${recipients[i].device}, skipping...`)
+        this.logger.warn(error)
+      }
     }
 
     // 5) encrypt a message
@@ -121,8 +125,13 @@ export default class Crypto {
     )
 
     // 9) add all recipients and their sessions
-    this.logger.debug(`add all recipients and their sessions ${sender}:${sender_device}`)
-    crypto.add_group_participant(group_session, `${sender}:${sender_device}`, session_with_bob)
+    try {
+      this.logger.debug(`add all recipients and their sessions ${sender}:${sender_device}`)
+      crypto.add_group_participant(group_session, `${sender}:${sender_device}`, session_with_bob)
+    } catch (error) {
+      this.logger.warn(`  there is a problem adding group participant ${sender}:${sender_device}, skipping...`)
+      this.logger.warn(error)
+    }
 
     // 10) decrypt the message ciphertext
     this.logger.debug(`decrypt the message ciphertext`)
