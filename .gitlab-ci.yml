@@ -94,6 +94,7 @@ git-leak:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
+    - echo "hello"
   script:
     - docker run -v ${PWD}:/repo zricethezav/gitleaks --path=/repo --redact -v
   only:
