@@ -13,16 +13,12 @@ stages:
 .setup-environment: &setup-environment |
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get -y install git curl libsodium-dev npm
+  apt-get -y install curl libsodium-dev npm
   tmpdir=$(mktemp -d)
   curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o ${tmpdir}/libself-olm_0.1.17_amd64.deb
   curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o ${tmpdir}/libself-omemo_0.1.3_amd64.deb
   apt-get -y install ${tmpdir}/libself-olm_0.1.17_amd64.deb
   apt-get -y install ${tmpdir}/libself-omemo_0.1.3_amd64.deb
-
-.install-git: &install-git |
-  apt-get update
-  apt-get -y install git
 
 .build: &build |
   npm install
@@ -94,7 +90,7 @@ git-leak:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
-    - echo "hello"
+    - echo "skipping default before_script"
   script:
     - docker run -v ${PWD}:/repo zricethezav/gitleaks --path=/repo --redact -v
   only:
@@ -125,7 +121,6 @@ release:
   stage: release
   image: eu.gcr.io/principal-oxide-204416/tools
   script:
-    - *install-git
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
   only:
