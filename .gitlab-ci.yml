@@ -13,7 +13,7 @@ stages:
 .setup-environment: &setup-environment |
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get -y install curl libsodium-dev npm
+  apt-get -y install git curl libsodium-dev npm
   tmpdir=$(mktemp -d)
   curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o ${tmpdir}/libself-olm_0.1.17_amd64.deb
   curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o ${tmpdir}/libself-omemo_0.1.3_amd64.deb
