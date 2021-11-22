@@ -68,6 +68,8 @@ stages:
   fi
 
 before_script:
+  - apt-get update
+  - apt-get -y install git
   - export SCRIPTS_DIR=$(mktemp -d)
   - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
 
@@ -91,6 +93,7 @@ git-leak:
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
+  before_script:
   script:
     - docker run -v ${PWD}:/repo zricethezav/gitleaks --path=/repo --redact -v
   only:
