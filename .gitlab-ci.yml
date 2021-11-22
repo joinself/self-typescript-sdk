@@ -10,7 +10,7 @@ stages:
   git clone https://${GITHUB_TOKEN}:@github.com/aldgate-ventures/license-finder.git
   license_finder --decisions_file ./license-finder/dependency_decisions.yml
 
-.setup: &setup |
+.setup-environment: &setup-environment |
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
   apt-get -y install curl libsodium-dev npm
@@ -19,6 +19,10 @@ stages:
   curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o ${tmpdir}/libself-omemo_0.1.3_amd64.deb
   apt-get -y install ${tmpdir}/libself-olm_0.1.17_amd64.deb
   apt-get -y install ${tmpdir}/libself-omemo_0.1.3_amd64.deb
+
+.git-install: &git-install |
+  apt-get update
+  apt-get -y install git
 
 .build: &build |
   npm install
@@ -64,8 +68,6 @@ stages:
   fi
 
 before_script:
-  - apt-get update
-  - apt-get -y install git
   - export SCRIPTS_DIR=$(mktemp -d)
   - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
 
@@ -98,7 +100,7 @@ build:
   stage: build
   image: ubuntu:focal-20210217
   script:
-    - *setup
+    - *setup-environment
     - *build
   artifacts:
     paths:
@@ -110,7 +112,7 @@ test:
   stage: test
   image: ubuntu:focal-20210217
   script:
-    - *setup
+    - *setup-environment
     - *test
   only:
     - branches
@@ -119,6 +121,7 @@ release:
   stage: release
   image: eu.gcr.io/principal-oxide-204416/tools
   script:
+    - *install-git
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
   only:
@@ -128,8 +131,8 @@ npm:
   stage: publish
   image: ubuntu:focal-20210217
   script:
+    - *setup-environment
     - ${SCRIPTS_DIR}/npm-setup
-    - *setup
     - *publish
   only:
     - master
