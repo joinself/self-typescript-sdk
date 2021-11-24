@@ -115,7 +115,7 @@
     "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-typescript2": "^0.30.0",
-    "semantic-release": "^17.4.2",
+    "semantic-release": "^18.0.1",
     "travis-deploy-once": "^3.3.0",
     "ts-jest": "^26.5.4",
     "ts-node": "^9.1.1",
@@ -126,7 +126,7 @@
     "@types/libsodium-wrappers": "^0.7.9",
     "@types/uuid": "^8.3.0",
     "axios": ">=0.24.0",
-    "eslint": "^7.22.0",
+    "eslint": "^8.3.0",
     "flatbuffers": "^2.0.3",
     "google-protobuf": "^4.0.0-rc.1",
     "libsodium-wrappers": "^0.7.9",
@@ -141,7 +141,7 @@
     "text-encoding": "^0.7.0",
     "ts-protoc-gen": "^0.14.0",
     "uuid": "^8.3.2",
-    "webpack-dev-server": "^3.11.2",
+    "webpack-dev-server": "^4.5.0",
     "websocket": "^1.0.33",
     "ws": "^8.3.0"
   }
