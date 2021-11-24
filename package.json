@@ -125,7 +125,7 @@
   "dependencies": {
     "@types/libsodium-wrappers": "^0.7.9",
     "@types/uuid": "^8.3.0",
-    "axios": ">=0.21.1",
+    "axios": ">=0.24.0",
     "eslint": "^7.22.0",
     "flatbuffers": "^2.0.3",
     "google-protobuf": "^4.0.0-rc.1",
