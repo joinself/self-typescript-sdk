@@ -95,7 +95,6 @@ secrets-check:
     - SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
     - ${SCRIPTS_DIR}/git-secrets
-  allow_failure: true
   only:
     - branches
 
