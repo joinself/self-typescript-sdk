@@ -73,8 +73,6 @@ license-check:
   stage: prebuild
   image: licensefinder/license_finder
   script:
-    - echo "Broken. Needs investigating."
-    - exit 1
     - ${SCRIPTS_DIR}/git-setup
     - *license-check
   allow_failure: true
