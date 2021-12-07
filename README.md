@@ -4,7 +4,7 @@
 
 By [Self ID](https://www.joinself.com/).
 
-![Build Status](https://github.com/joinself/self-typescript-sdk/actions/workflows/ci.yml/badge.svg?branch=master)
+![Build Status](https://github.com/joinself/self-typescript-sdk/actions/workflows/ci.yml/badge.svg?branch=main)
 [![Gem Version](https://badge.fury.io/rb/selfid.svg)](https://badge.fury.io/rb/selfid)
 
 This sdk provides a toolset to interact with self network from your javascript code.

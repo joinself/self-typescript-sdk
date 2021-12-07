@@ -124,7 +124,7 @@ release:
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
   only:
-    - master
+    - main
 
 npm:
   stage: publish
@@ -134,4 +134,4 @@ npm:
     - ${SCRIPTS_DIR}/npm-setup
     - *publish
   only:
-    - master
+    - main

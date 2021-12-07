@@ -28,6 +28,6 @@ exec('git config user.name "Adrià Cidre"')
 exec('git config user.email "593270+adriacidre@users.noreply.github.com"')
 exec('git commit -m "docs(docs): update gh-pages"')
 exec(
-  `git push --force --quiet "https://${ghToken}@${repository}" master:gh-pages`
+  `git push --force --quiet "https://${ghToken}@${repository}" main:gh-pages`
 )
 echo("Docs deployed!!")
