@@ -96,7 +96,7 @@ secrets-check:
   before_script:
     - echo "skipping default before_script"
   script:
-    - SCRIPTS_DIR=$(mktemp -d)
+    - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
     - ${SCRIPTS_DIR}/git-secrets
   rules:
