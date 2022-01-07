@@ -5,6 +5,11 @@ stages:
   - release
   - publish
 
+.rules:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE =~ /external_pull_request_event|web/
+
 .license-check: &license-check |
   npm install
   source ~/.profile
@@ -77,8 +82,8 @@ license-check:
     - ${SCRIPTS_DIR}/git-setup
     - *license-check
   allow_failure: true
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 secrets-check:
   stage: prebuild
@@ -94,8 +99,8 @@ secrets-check:
     - SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
     - ${SCRIPTS_DIR}/git-secrets
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 build:
   stage: build
@@ -106,8 +111,8 @@ build:
   artifacts:
     paths:
       - artefacts.tar.gz
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 test:
   stage: test
@@ -115,8 +120,8 @@ test:
   script:
     - *setup-environment
     - *test
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 release:
   stage: release
@@ -124,8 +129,8 @@ release:
   script:
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 npm:
   stage: publish
@@ -134,5 +139,5 @@ npm:
     - *setup-environment
     - ${SCRIPTS_DIR}/npm-setup
     - *publish
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
