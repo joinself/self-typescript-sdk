@@ -3,6 +3,7 @@
 import SelfSDK from '../../src/self-sdk'
 import { exit } from 'process';
 import { ChatMessage } from '../../src/chat-message';
+import { readFileSync, writeFileSync } from 'fs';
 
 // Wait til the response is received
 const wait = (seconds) =>

@@ -2,6 +2,7 @@
 
 import ChatService from './chat-service';
 import { stringToArray } from './chat-service';
+import { FileObject } from './chat-object';
 
 export class ChatMessage {
   chat: ChatService
@@ -11,6 +12,7 @@ export class ChatMessage {
   gid: string|undefined
   iss: string
   payload: any
+  objects: FileObject[]
 
   constructor(c: ChatService, recipients: string|string[], payload: any) {
     this.chat = c
@@ -20,6 +22,17 @@ export class ChatMessage {
     this.jti = payload['jti']
     this.gid = payload['gid']
     this.payload = payload
+  }
+
+  async processObjects() {
+    if ('objects' in this.payload) {
+      this.objects = []
+      for (var i = 0; i<this.payload.objects.length; i++) {
+        let fo = new FileObject(this.chat.is.jwt.authToken(), this.chat.is.url)
+        await fo.buildFromObject(this.payload.objects[i])
+        this.objects.push(fo)
+      }
+    }
   }
 
   async delete() {

@@ -4,6 +4,7 @@ import MessagingService from '../dist/types/messaging-service';
 import IdentityService from '../dist/types/identity-service';
 import { logging, Logger } from './logging'
 import { ChatMessage } from './chat-message';
+import { FileObject } from './chat-object';
 
 
 export default class ChatService {
@@ -48,27 +49,15 @@ export default class ChatService {
     if ("gid" in opts) payload['gid'] = opts['gid'];
     if ("rid" in opts) payload['rid'] = opts['rid'];
 
-/*
-    if(objects.length > 0) {
-      payload.objects = []
-      for (var i = 0; i< objects.length; i++) {
-        let path = objects[i]
-        if (!isValidHttpUrl(objects[i])) {
-          path = `${this.objectStorageFolder}${objects[i]}`
-        }
-        let obj = await this.encryptionClient?.fileToObject(path)
-        log.warn(obj)
-        payload.objects.push(obj)
+    if ('objects' in opts) {
+      payload['objects'] = []
+      for (var i = 0; i < opts.objects.length; i++) {
+        let fo = new FileObject(this.is.jwt.authToken(), this.is.url)
+        await fo.buildFromData(opts.objects[i].name, opts.objects[i].data, opts.objects[i].mime)
+        payload['objects'].push(fo.toPayload())
       }
-
-      payload.mime = "attachment"
     }
-*/
 
-    console.log("......")
-    console.log(recipients)
-    console.log(payload)
-    console.log("......")
     await this.ms.send(recipients, payload)
     let cm = new ChatMessage(this, recipients, payload)
     return  cm
@@ -133,8 +122,9 @@ export default class ChatService {
    * @param opts extra options.
    */
   onMessage(callback: (cm: ChatMessage) => void, opts: any = {}) {
-    this.ms.subscribe("chat.message", (res: any): any => {
+    this.ms.subscribe("chat.message", async (res: any): Promise<any> => {
       let cm = new ChatMessage(this, res['aud'], res)
+      await cm.processObjects()
 
       if (!('mark_as_delivered' in opts && opts['mark_as_delivered'] == false)) cm.markAsDelivered();
       if ('mark_as_read' in opts && opts['mark_as_read'] == true) cm.markAsRead();
