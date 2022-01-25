@@ -1,10 +1,11 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-import MessagingService from '../dist/types/messaging-service';
-import IdentityService from '../dist/types/identity-service';
+import MessagingService from './messaging-service';
+import IdentityService from './identity-service';
 import { logging, Logger } from './logging'
 import { ChatMessage } from './chat-message';
 import { FileObject } from './chat-object';
+import { ChatGroup } from './chat-group';
 
 
 export default class ChatService {
@@ -70,7 +71,7 @@ export default class ChatService {
    * @param cids conversation ids to be marked as delivered.
    * @param gid group id if any
    */
-  async delivered(recipients: string|string[], cids: string|string[], gid:string|null) {
+  async delivered(recipients: string|string[], cids: string|string[], gid:string|null = null) {
     await this.confirm("delivered", recipients, cids, gid)
   }
 
@@ -81,11 +82,18 @@ export default class ChatService {
    * @param cids conversation ids to be marked as read.
    * @param gid group id if any
    */
-  async read(recipients: string|string[], cids: string|string[], gid:string|null) {
+  async read(recipients: string|string[], cids: string|string[], gid:string|null = null) {
     await this.confirm("read", recipients, cids, gid)
   }
 
-  async edit(recipients: string[], cid: string, body: string, gid:string|null) {
+  /**
+   * Changes the body of a previous message.
+   * @param recipients recipients of the message.
+   * @param cid referenced message jti.
+   * @param body new body.
+   * @param gid group id if any.
+   */
+  async edit(recipients: string[], cid: string, body: string, gid:string|null = null) {
     let p = {
       typ: "chat.message.edit",
       cid: cid,
@@ -95,7 +103,13 @@ export default class ChatService {
     await this.ms.send(recipients, p)
   }
 
-  async delete(recipients: string[], cids: string|string[], gid: string|null) {
+  /**
+   * Deletes previous messages.
+   * @param recipients recipients of the message.
+   * @param cids referenced message/s jti.
+   * @param gid group id if any.
+   */
+   async delete(recipients: string[], cids: string|string[], gid: string|null = null) {
     let p = {
       typ: "chat.message.delete",
       cids: stringToArray(cids)
@@ -104,16 +118,57 @@ export default class ChatService {
     await this.ms.send(recipients, p)
   }
 
-  invite(gid: string, name: string, members: string[], opts:any = {}) {
+  /**
+   * Sends a group invitation to a list of members.
+   * @param gid  group id.
+   * @param name name of the group.
+   * @param members list of group members
+   * @param opts list of options like link, key...
+   */
+  async invite(gid: string, name: string, members: string[], opts:any = {}) {
+    let p = {
+      typ: 'chat.invite',
+      gid: gid,
+      name: name,
+      members: members,
+      aud: gid,
+    }
 
+    if ('data' in opts) { // it has a group image.
+      let fo = new FileObject(this.is.jwt.authToken(), this.is.url)
+      await fo.buildFromData("", opts.data, opts.mime)
+      let fp = fo.toPayload()
+      opts = { ...opts, ...fp }
+    }
+    this.ms.send(members, p)
+    return new ChatGroup(this, p)
   }
 
-  join(gid: string, members: string[]) {
+  /**
+   * Joins a group
+   * @param gid group id.
+   * @param members list of group members.
+   */
+   async join(gid: string, members: string[]) {
+     // Allow incoming connections from the given members.
+    for(var i =0; i < members.length; i++) {
+      await this.ms.permitConnection(members[i])
+    }
 
+    // Create missing sessions with group members.
+    await this.createMissingSessions(members)
+
+    // Send joining confirmation.
+    this.ms.send(members, { typ: 'chat.join', gid: gid, aud: gid })
   }
 
-  leave(gid: string, members: string[]) {
-
+  /**
+   * Leaves a group
+   * @param gid group id.
+   * @param members list of group members.
+   */
+  async leave(gid: string, members: string[]) {
+    this.ms.send(members, { typ: 'chat.remove', gid: gid })
   }
 
   /**
@@ -133,15 +188,76 @@ export default class ChatService {
     })
   }
 
-  onInvite(callback: any) {
+  /**
+   * Subscribes to group invitations.
+   * @param callback function to be executed when a message is received.
+   */
+  onInvite(callback: (cm: ChatGroup) => {}) {
+    this.ms.subscribe('chat.invite', async (payload: any): Promise<any> =>{
+      let g = new ChatGroup(this, payload)
+      callback(g)
+    })
   }
 
-  onJoin(callback: any) {
+  /**
+   * Subscribes to group joins.
+   * @param callback function to be executed when a message is received.
+   */
+   onJoin(callback: (iss: string, gid: string) => {}) {
+    this.ms.subscribe('chat.join', async (payload: any): Promise<any> =>{
+      callback(payload.iss, payload.gid)
+    })
   }
 
-  onLeave(callback: any) {
+  /**
+   * Subscribes to people leaving the group messages.
+   * @param callback function to be executed when a message is received.
+   */
+   onLeave(callback: (iss: string, gid: string) => {}) {
+    this.ms.subscribe('chat.remove', async (payload: any): Promise<any> =>{
+      callback(payload.iss, payload.gid)
+    })
   }
 
+  // Group invites may come with members of the group we haven't set up a session
+  // previously, for those identitiese need to establish a session, but only if
+  // our identity appears before the others in the list members.
+  private async createMissingSessions(members: string[]) {
+    if (members === undefined) return;
+
+    let posteriorMembers = false
+    var requests = [];
+
+    for (var i=0; i<members.length; i++) {
+      if (posteriorMembers) {
+        let devices = await this.is.devices(members[i])
+        for (var j=0; j<devices.length; j++) {
+          if (!this.ms.ms.hasSession(members[i], devices[j])) {
+            var recipient = members[i] + ":" + devices[j]
+            this.logger.debug(`sending sessions.create to ${recipient}`)
+            requests.push(this.ms.send(recipient, {
+              typ: `sessions.create`,
+              aud: members[i],
+            }))
+          }
+        }
+      }
+
+      if (members[i] == this.is.jwt.appID) {
+        posteriorMembers = true
+      }
+    }
+    return Promise.all(requests);
+  }
+
+
+  /**
+   * Sends a confirmation message read|delivered to the specified recipients.
+   * @param action delivered|read
+   * @param recipients recipient/s of the confirmation/s
+   * @param cids confirmation ids.
+   * @param gid group id if any.
+   */
   private async confirm(action: string, recipients: string|string[], cids: string|string[], gid: string|null) {
     recipients = stringToArray(recipients)
     cids = stringToArray(cids)

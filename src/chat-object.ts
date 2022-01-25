@@ -2,6 +2,9 @@ import { logging, Logger } from './logging'
 
 const axios = require('axios').default;
 
+/**
+ * FileObject represents an object (image or file) shared through messaging.
+ */
 export class FileObject {
   token: string
   url: string
@@ -16,6 +19,11 @@ export class FileObject {
   _sodium: any
   logger: Logger
 
+  /**
+   * Creates a new FileObject.
+   * @param token authentication token to talk to the api.
+   * @param url joinself api url.
+   */
   constructor(token, url) {
     this.token = token
     this.url = url
@@ -23,6 +31,13 @@ export class FileObject {
     this.logger = logging.getLogger('core.self-sdk')
   }
 
+  /**
+   * Initializes the object from given data stream.
+   * @param name object name.
+   * @param data data stream.
+   * @param mime mime type.
+   * @returns the current FileObject
+   */
   async buildFromData(name: string, data: string, mime: string): Promise<FileObject> {
     await this._sodium.ready;
 
@@ -41,6 +56,11 @@ export class FileObject {
     return this
   }
 
+  /**
+   * Initializes the FileObject from a received chat object payload.
+   * @param input
+   * @returns the current FileObject
+   */
   async buildFromObject(input: any): Promise<FileObject> {
     await this._sodium.ready;
 
@@ -68,6 +88,10 @@ export class FileObject {
     return this
   }
 
+  /**
+   * Represents the current FileObject as a chat shareable object payload.
+   * @returns payload
+   */
   toPayload() {
     return {
       name: this.name,
