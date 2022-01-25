@@ -4,6 +4,9 @@ import SelfSDK from '../../src/self-sdk'
 import { exit } from 'process';
 import { ChatMessage } from '../../src/chat-message';
 import { readFileSync, writeFileSync } from 'fs';
+import { ChatGroup } from '../../src/chat-group';
+
+let groups = {}
 
 // Wait til the response is received
 const wait = (seconds) =>
@@ -30,7 +33,6 @@ async function chat(appID: string, appSecret: string, selfID: string) {
 
     sdk.chat().onMessage(async (cm: ChatMessage) => {
       console.log(`chat.message received with ${cm.body}`)
-
       await wait(5)
       await cm.respond("tupu")
       await wait(5)
@@ -39,9 +41,24 @@ async function chat(appID: string, appSecret: string, selfID: string) {
       await nm.edit("about to be removed")
       await wait(5)
       await nm.delete()
-
-
     }, { 'mark_as_read': true })
+
+    sdk.chat().onInvite(async (g: ChatGroup) => {
+      console.log(`you've been invited to ${g.name}`)
+      g.join()
+      groups[g.gid] = g
+      await wait(5)
+      await groups[g.gid].message("hey!")
+    })
+
+    sdk.chat().onJoin(async (iss: string, gid: string) => {
+      groups[gid].members.push(iss)
+    })
+
+    sdk.chat().onLeave(async (iss: string, gid: string) => {
+      delete groups[gid].members[iss]
+    })
+
 
     sdk.logger.info(`sending a message to ${selfID}`)
     await sdk.chat().message(selfID, "hello")
