@@ -1,14 +1,13 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH
+
 stages:
   - prebuild
   - build
   - test
   - release
   - publish
-
-.rules:
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_PIPELINE_SOURCE =~ /external_pull_request_event|web/
 
 .license-check: &license-check |
   npm install
@@ -82,8 +81,6 @@ license-check:
     - ${SCRIPTS_DIR}/git-setup
     - *license-check
   allow_failure: true
-  rules:
-    - !reference [.rules, rules]
 
 secrets-check:
   stage: prebuild
@@ -100,8 +97,6 @@ secrets-check:
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
     - ${SCRIPTS_DIR}/git-secrets
   allow_failure: true
-  rules:
-    - !reference [.rules, rules]
 
 build:
   stage: build
@@ -112,8 +107,6 @@ build:
   artifacts:
     paths:
       - artefacts.tar.gz
-  rules:
-    - !reference [.rules, rules]
 
 test:
   stage: test
@@ -121,8 +114,6 @@ test:
   script:
     - *setup-environment
     - *test
-  rules:
-    - !reference [.rules, rules]
 
 release:
   stage: release
