@@ -10,6 +10,7 @@ import Jwt from './jwt'
 import Messaging from './messaging'
 import Crypto from './crypto'
 import { logging, LogEntry, Logger } from './logging'
+import ChatService from './chat-service';
 
 /**
  * SelfSDK allow you interact with self network.
@@ -30,6 +31,7 @@ export default class SelfSDK {
   private factsService: any
   private identityService: any
   private messagingService: any
+  private chatService: any
   private encryptionClient: Crypto
 
   defaultBaseURL = 'https://api.joinself.com'
@@ -158,6 +160,10 @@ export default class SelfSDK {
       sdk.encryptionClient,
       env
     )
+    sdk.chatService = new ChatService(
+      sdk.messagingService,
+      sdk.identityService,
+    )
 
     return sdk
   }
@@ -201,6 +207,15 @@ export default class SelfSDK {
   messaging(): MessagingService {
     return this.messagingService
   }
+
+  /**
+   * Access the chat service
+   * @returns ChatService
+   */
+   chat(): ChatService {
+    return this.chatService
+  }
+
 
   private calculateBaseURL(opts?: { baseURL?: string; env?: string }) {
     if (!opts) {

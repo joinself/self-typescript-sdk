@@ -240,6 +240,7 @@ export default class MessagingService {
       sub = recipient
       recipientIDs = [recipient]
     } else {
+      if (recipient.length == 1) sub = recipient[0];
       recipientIDs = recipient
     }
 
@@ -254,6 +255,7 @@ export default class MessagingService {
     }
 
     let j = this.buildRequest(sub, request)
+    console.log(j)
     let plaintext = this.jwt.toSignedJson(j)
 
     let recipients:Recipient[] = []
@@ -322,7 +324,6 @@ export default class MessagingService {
         request['cid'] = uuidv4()
     }
     if (!('gid' in request)) {
-      request['gid'] = uuidv4()
       request['sub'] = selfid
     }
 
