@@ -253,5 +253,48 @@ describe("chat-service", () => {
     })
   })
 
+  describe("ChatService::message", () => {
+    it('should send a chat.message', async () => {
+      let recipients = ["a", "b", "c"]
+      let body = "body"
+
+      const msMock = jest.spyOn(mss, 'send').mockImplementation(
+        async (to, payload) => {
+          expect(to).toEqual(recipients)
+          expect(payload.typ).toEqual('chat.message')
+          expect(payload.msg).toEqual(body)
+          expect(payload.aud).toEqual(recipients[0])
+        }
+      )
+
+      await cs.message(recipients, body)
+    })
+
+    it('should send a chat.message with options', async () => {
+      let recipients = ["a", "b", "c"]
+      let body = "body"
+      let opts = {
+        jti: "jti",
+        gid: "gid",
+        rid: "rid"
+      }
+
+      const msMock = jest.spyOn(mss, 'send').mockImplementation(
+        async (to, payload) => {
+          expect(to).toEqual(recipients)
+          expect(payload.typ).toEqual('chat.message')
+          expect(payload.msg).toEqual(body)
+          expect(payload.aud).toEqual(opts.gid)
+          expect(payload.jti).toEqual(opts.jti)
+          expect(payload.gid).toEqual(opts.gid)
+          expect(payload.rid).toEqual(opts.rid)
+        }
+      )
+
+      await cs.message(recipients, body, opts)
+    })
+
+  })
+
 
 })

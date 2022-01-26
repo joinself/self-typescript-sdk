@@ -1,3 +1,5 @@
+// Copyright 2020 Self Group Ltd. All Rights Reserved.
+
 import { logging, Logger } from './logging'
 
 const axios = require('axios').default;
@@ -18,17 +20,23 @@ export class FileObject {
   ciphertext: string
   _sodium: any
   logger: Logger
+  fi: RemoteFileInteractor
 
   /**
    * Creates a new FileObject.
    * @param token authentication token to talk to the api.
    * @param url joinself api url.
    */
-  constructor(token, url) {
+  constructor(token, url, fi?: RemoteFileInteractor) {
     this.token = token
     this.url = url
     this._sodium = require('libsodium-wrappers-sumo');
     this.logger = logging.getLogger('core.self-sdk')
+    if (fi) {
+      this.fi = fi
+    } else {
+      this.fi = new RemoteFileInteractor(token, url)
+    }
   }
 
   /**
@@ -45,7 +53,7 @@ export class FileObject {
     let obj = this.encryptObject(data)
 
     // Push the encrypted message
-    let remoteObject = await this.postObject(obj.ciphertext)
+    let remoteObject = await this.fi.postObject(obj.ciphertext)
 
     this.link = `${this.url}/v1/objects/${remoteObject.id}`,
     this.key = obj.key
@@ -64,7 +72,7 @@ export class FileObject {
   async buildFromObject(input: any): Promise<FileObject> {
     await this._sodium.ready;
 
-    let response = await this.getRemoteFileContents(input['link'], input['expires'])
+    let response = await this.fi.getRemoteFileContents(input['link'], input['expires'])
     let buf = response.contents
 
     if ('key' in input) {
@@ -140,10 +148,29 @@ export class FileObject {
 
     return this._sodium.to_base64(composedKey, this._sodium.base64_variants.URLSAFE_NO_PADDING)
    }
+}
+
+export class RemoteFileInteractor {
+  token: string
+  url: string
+  link: string
+  name: string
+  logger: Logger
+
+  /**
+   * Creates a new FileObject.
+   * @param token authentication token to talk to the api.
+   * @param url joinself api url.
+   */
+  constructor(token: string, url: string) {
+    this.token = token
+    this.url = url
+    this.logger = logging.getLogger('core.self-sdk')
+  }
 
   // fileUrl: the absolute url of the image or video you want to download
   // downloadFolder: the path of the downloaded file on your machine
-  private async getRemoteFileContents(link: any, expires: number|undefined): Promise<any> {
+  public async getRemoteFileContents(link: any, expires: number|undefined): Promise<any> {
     // return { processing: true, contents: null }
     this.logger.debug(`getting remote file contents ${link}`)
     let status = 0
@@ -181,7 +208,7 @@ export class FileObject {
    * @param obj array with details
    * @returns
    */
-   private async postObject(data:any):Promise<any> {
+   public async postObject(data:any):Promise<any> {
     let url = `${this.url}/v1/objects`
 
     try {
@@ -201,10 +228,10 @@ export class FileObject {
     }
   }
 
-
   private isExpired(expires:number|undefined): boolean {
     if (expires == undefined) return true
     let now = Math.round(new Date().valueOf()/1000)
     return (expires < now)
   }
+
 }
