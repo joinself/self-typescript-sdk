@@ -64,7 +64,7 @@ export default class FactsService {
   async request(
     selfid: string,
     facts: Fact[],
-    opts?: { cid?: string; exp?: number; async?: boolean }
+    opts?: { cid?: string; exp?: number; async?: boolean, allowedFor?: number }
   ): Promise<FactResponse> {
     let options = opts ? opts : {}
     let as = options.async ? options.async : false
@@ -171,7 +171,7 @@ export default class FactsService {
   async requestViaIntermediary(
     selfid: string,
     facts: Fact[],
-    opts?: { cid?: string; exp?: number; intermediary?: string }
+    opts?: { cid?: string; exp?: number; intermediary?: string, allowedFor?: number }
   ): Promise<FactResponse> {
     let options = opts ? opts : {}
 
@@ -276,7 +276,7 @@ export default class FactsService {
    * @param facts an array with the facts you're requesting.
    * @param opts optional parameters like conversation id or the expiration time
    */
-  private buildRequest(selfid: string, facts: Fact[], opts?: { cid?: string; exp?: number }): any {
+  private buildRequest(selfid: string, facts: Fact[], opts?: { cid?: string; exp?: number, allowedFor?: number }): any {
     let options = opts ? opts : {}
     let cid = options.cid ? options.cid : uuidv4()
     let expTimeout = options.exp ? options.exp : 300000
@@ -292,7 +292,7 @@ export default class FactsService {
     let exp = new Date(Math.floor(this.jwt.now() + expTimeout * 60))
 
     // Ciphertext
-    return {
+    let c = {
       typ: 'identities.facts.query.req',
       iss: this.jwt.appID,
       sub: selfid,
@@ -303,5 +303,12 @@ export default class FactsService {
       jti: uuidv4(),
       facts: facts
     }
+
+    if ('allowedFor' in options) {
+      let au = new Date(Math.floor(this.jwt.now() + options.allowedFor * 60))
+      c['allowed_until'] = au.toISOString()
+    }
+
+    return c
   }
 }
