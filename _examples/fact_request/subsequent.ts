@@ -4,9 +4,14 @@ import SelfSDK from '../../src/self-sdk'
 import { exit } from 'process';
 import { logging } from '../../src/logging';
 
+const wait = (seconds) =>
+    new Promise(resolve =>
+        setTimeout(() => resolve(true), seconds * 1000)
+);
+
 async function request(appID: string, appSecret: string, selfID: string) {
     // const SelfSDK = require("self-sdk");
-    let opts = {'logLevel': 'debug'}
+    let opts = {'logLevel': 'info'}
     if (process.env["SELF_ENV"] != "") {
         opts['env'] = process.env["SELF_ENV"]
     }
@@ -17,7 +22,7 @@ async function request(appID: string, appSecret: string, selfID: string) {
     sdk.logger.info(`waiting for user input`)
 
     try {
-        let tenMinutes = 10 * 60
+        let tenMinutes = 10 * 60 * 60
         let res = await sdk.facts().request(selfID, [{ fact: 'phone_number' }], { allowedFor: tenMinutes })
 
         if (!res) {
@@ -26,6 +31,8 @@ async function request(appID: string, appSecret: string, selfID: string) {
           let pn = res.attestationValuesFor('phone_number')[0]
           sdk.logger.info(`${selfID} phone number is "${pn}"`)
           sdk.logger.info(`waiting 60 seconds to send the same request`)
+          await wait(60)
+
           let res2 = await sdk.facts().request(selfID, [{ fact: 'phone_number' }], { allowedFor: tenMinutes })
           if (!res2) {
             sdk.logger.warn(`fact request has timed out`)
