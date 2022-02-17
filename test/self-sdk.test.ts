@@ -18,6 +18,13 @@ describe('SelfSDK test', () => {
   beforeEach(async () => {
     sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
 
+    const axios = require('axios')
+    jest.mock('axios')
+    axios.get.mockResolvedValue({
+      status: 200,
+      data: [1]
+    })
+
     sdk = await SelfSDK.build('appID', sk, 'random', '/tmp/.self_storage', {
       messagingURL: '',
       ntp: false,
