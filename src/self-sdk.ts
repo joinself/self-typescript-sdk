@@ -113,6 +113,8 @@ export default class SelfSDK {
     shell.mkdir('-p', `${storageFolder}/keys/${sdk.jwt.appKeyID}`)
 
     sdk.identityService = new IdentityService(sdk.jwt, sdk.baseURL)
+    // Check the current app still exists
+    await sdk.deviceStillExists()
     if (options['encryptionClient'] == undefined) {
       sdk.encryptionClient = await Crypto.build(
         sdk.identityService,
@@ -245,5 +247,15 @@ export default class SelfSDK {
     }
 
     return this.defaultMessagingURL
+  }
+
+  private async deviceStillExists() {
+    let devices = await this.identityService.devices(this.jwt.appID)
+    for (var i=0; i<devices.length; i++) {
+      if (devices[i] == this.jwt.deviceID) {
+        return
+      }
+    }
+    throw new Error('identity does not exist')
   }
 }
