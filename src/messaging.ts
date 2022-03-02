@@ -117,11 +117,15 @@ export default class Messaging {
       this.logger.debug(`processing ${p.typ}`)
       switch (p.typ) {
         case 'identities.facts.query.resp': {
-          await this.processResponse(p, 'identities.facts.query.resp')
+          await this.processResponse(p, 'identities.facts.query.resp', plaintext)
           break
         }
         case 'identities.authenticate.resp': {
-          await this.processResponse(p, 'identities.authenticate.resp')
+          await this.processResponse(p, 'identities.authenticate.resp', plaintext)
+          break
+        }
+        case 'document.sign.resp': {
+          await this.processResponse(p, 'document.sign.resp', plaintext)
           break
         }
         default: {
@@ -139,8 +143,8 @@ export default class Messaging {
     }
   }
 
-  private async processResponse(payload: any, typ: string) {
-    let res = await this.buildResponse(payload)
+  private async processResponse(payload: any, typ: string, input: string) {
+    let res = await this.buildResponse(payload, input)
 
     if (this.requests.has(payload.cid)) {
       let r = this.requests.get(payload.cid)
@@ -153,10 +157,11 @@ export default class Messaging {
     }
   }
 
-  private async buildResponse(payload: any): Promise<any> {
+  private async buildResponse(payload: any, input: string): Promise<any> {
     if (payload.typ === 'identities.facts.query.resp') {
       return FactResponse.parse(payload, this.jwt, this.is)
     }
+    payload["input"] = input
     return payload
   }
 
@@ -349,7 +354,6 @@ export default class Messaging {
       this.logger.debug(`do not need to wait for response`)
       return request.acknowledged
     }
-    this.logger.debug(`waiting for response ${id}`)
     await this.wait_for_response(id)
     if (request.response) {
       this.logger.debug(`response received`)

@@ -233,7 +233,7 @@ export default class MessagingService {
    * @param recipient the recipient/s identifier/s.
    * @param request the request to be sent.
    */
-  async send(recipient: (string | Array<string>), request: Request): Promise<void> {
+  async send(recipient: (string | Array<string>), request: Request, opts?: any): Promise<Response | boolean | void> {
     let recipientIDs = []
     let sub = ""
     if (!Array.isArray(recipient)) {
@@ -278,7 +278,7 @@ export default class MessagingService {
     let currentIdentityDevices = await this.is.devices(this.jwt.appID)
     for (var i = 0; i < currentIdentityDevices.length; i++) {
       if (currentIdentityDevices[i] != this.jwt.deviceID) {
-        this.logger.debug(`adding recipient ${recipientIDs[k]}:${currentIdentityDevices[i]}`)
+        this.logger.debug(`adding recipient ${this.jwt.appID}:${currentIdentityDevices[i]}`)
         recipients.push({
           id: this.jwt.appID,
           device: currentIdentityDevices[i]
@@ -294,7 +294,11 @@ export default class MessagingService {
       msgs.push(msg)
     }
 
-    this.ms.send(j.cid, { data: msgs, waitForResponse: false })
+    let req = { data: msgs, waitForResponse: false }
+    if (opts && opts["waitForResponse"] == true) {
+      return await this.ms.request(j.jti, j.jti, msgs)
+    }
+    return await this.ms.send(j.jti, req)
   }
 
   /**
