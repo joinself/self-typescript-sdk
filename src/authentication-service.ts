@@ -158,7 +158,7 @@ export default class AuthenticationService {
         flatbuffers.createLong(0, 0)
       )
     )
-    
+
     let msg = message.SelfMessaging.Message.endMessage(builder)
 
     builder.finish(msg)
@@ -199,11 +199,11 @@ export default class AuthenticationService {
     let encodedBody = this.jwt.encode(body)
 
     if (this.env === '') {
-      return `https://joinself.page.link/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app`
+      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app`
     } else if (this.env === 'development') {
-      return `https://joinself.page.link/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.dev`
+      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.dev`
     }
-    return `https://joinself.page.link/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.${this.env}`
+    return `https://${this.env}.links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.${this.env}`
   }
 
   /**
