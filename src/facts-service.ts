@@ -64,7 +64,7 @@ export default class FactsService {
   async request(
     selfid: string,
     facts: Fact[],
-    opts?: { cid?: string; exp?: number; async?: boolean, allowedFor?: number }
+    opts?: { cid?: string; exp?: number; async?: boolean, allowedFor?: number, auth?: boolean }
   ): Promise<FactResponse> {
     let options = opts ? opts : {}
     let as = options.async ? options.async : false
@@ -276,7 +276,7 @@ export default class FactsService {
    * @param facts an array with the facts you're requesting.
    * @param opts optional parameters like conversation id or the expiration time
    */
-  private buildRequest(selfid: string, facts: Fact[], opts?: { cid?: string; exp?: number, allowedFor?: number }): any {
+  private buildRequest(selfid: string, facts: Fact[], opts?: { cid?: string; exp?: number, allowedFor?: number, auth?: boolean }): any {
     let options = opts ? opts : {}
     let cid = options.cid ? options.cid : uuidv4()
     let expTimeout = options.exp ? options.exp : 300000
@@ -307,6 +307,10 @@ export default class FactsService {
     if ('allowedFor' in options) {
       let au = new Date(Math.floor(this.jwt.now() + options.allowedFor * 60))
       c['allowed_until'] = au.toISOString()
+    }
+
+    if ('auth' in options) {
+      c['auth'] = options.auth
     }
 
     return c
