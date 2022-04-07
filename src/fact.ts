@@ -24,17 +24,25 @@ const FACT_VALID_TO = 'valid_to'
 const FACT_CATEGORIES = 'categories'
 const FACT_SORT_CODE = 'sort_code'
 const FACT_COUNTRY_OF_ISSUANCE = 'country_of_issuance'
+const FACT_ACCOUNT_ID = 'account_id'
+const FACT_NICKNAME = 'nickname'
 
 const SOURCE_USER_SPECIFIED = 'user_specified'
 const SOURCE_PASSPORT = 'passport'
 const SOURCE_DRIVING_LICENSE = 'driving_license'
 const SOURCE_IDENTITY_CARD = 'identity_card'
+const SOURCE_TWITTER = 'twitter'
+const SOURCE_LINKEDIN = 'linkedin'
+const SOURCE_FACEBOOK = 'facebok'
 
 let validSources = [
   SOURCE_USER_SPECIFIED,
   SOURCE_PASSPORT,
   SOURCE_DRIVING_LICENSE,
-  SOURCE_IDENTITY_CARD
+  SOURCE_IDENTITY_CARD,
+  SOURCE_TWITTER,
+  SOURCE_LINKEDIN,
+  SOURCE_FACEBOOK
 ]
 let factsForPassport = [
   FACT_DOCUMENT_NUMBER,
@@ -59,6 +67,10 @@ let factsForDL = [
   FACT_PLACE_OF_BIRTH,
   FACT_COUNTRY_OF_ISSUANCE
 ]
+
+let factsForTwitter = [FACT_ACCOUNT_ID, FACT_NICKNAME]
+let factsForLinkedin = [FACT_ACCOUNT_ID, FACT_NICKNAME]
+let factsForFacebook = [FACT_ACCOUNT_ID, FACT_NICKNAME]
 
 let factsForUser = [FACT_DOCUMENT_NUMBER, FACT_DISPLAY_NAME, FACT_EMAIL, FACT_PHONE]
 const logger = logging.getLogger('core.self-sdk')
@@ -108,7 +120,7 @@ export default class Fact {
 
     let valid = true
     if (input.sources == undefined) {
-      if ([...factsForPassport, ...factsForDL, ...factsForUser].includes(input.fact) == false) {
+      if ([...factsForPassport, ...factsForDL, ...factsForUser, ...factsForTwitter, ...factsForLinkedin, ...factsForFacebook].includes(input.fact) == false) {
         valid = false
       }
     } else {
@@ -138,6 +150,28 @@ export default class Fact {
             return
           }
         }
+        if (s == SOURCE_TWITTER) {
+          if (!factsForTwitter.includes(input.fact)) {
+            logger.warn(errInvalidFactToSource)
+            valid = false
+            return
+          }
+        }
+        if (s == SOURCE_LINKEDIN) {
+          if (!factsForLinkedin.includes(input.fact)) {
+            logger.warn(errInvalidFactToSource)
+            valid = false
+            return
+          }
+        }
+        if (s == SOURCE_FACEBOOK) {
+          if (!factsForFacebook.includes(input.fact)) {
+            logger.warn(errInvalidFactToSource)
+            valid = false
+            return
+          }
+        }
+
       }
     }
 
