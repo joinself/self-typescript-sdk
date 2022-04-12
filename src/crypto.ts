@@ -163,12 +163,14 @@ export default class Crypto {
     let mtype = group_message_json['recipients'][myID]['mtype']
     let ciphertext = group_message_json['recipients'][myID]['ciphertext']
 
-    if (fs.existsSync(session_file_name) && mtype === 1) {
+    if (fs.existsSync(session_file_name)) {
         // 7a) if bobs's session file exists load the pickle from the file
         this.logger.debug(` bobs's session file exists load the pickle from the file`)
         let session = fs.readFileSync(session_file_name)
         session_with_bob = crypto.unpickle_session(session.toString(), this.storageKey)
-      } else {
+    }
+
+    if (session_with_bob == null || !crypto.matches_inbound_session(session_with_bob, ciphertext)) {
         this.logger.debug(` bobs's session does not exist, let's create a new session`)
         // 7b-i) if you have not previously sent or received a message to/from bob,
         //       you should extract the initial message from the group message intended
