@@ -170,7 +170,7 @@ export default class Crypto {
         session_with_bob = crypto.unpickle_session(session.toString(), this.storageKey)
     }
 
-    if (session_with_bob == null || !crypto.matches_inbound_session(session_with_bob, ciphertext)) {
+    if (session_with_bob == null || mtype == 0 && !crypto.matches_inbound_session(session_with_bob, ciphertext)) {
         this.logger.debug(` bobs's session does not exist, let's create a new session`)
         // 7b-i) if you have not previously sent or received a message to/from bob,
         //       you should extract the initial message from the group message intended
