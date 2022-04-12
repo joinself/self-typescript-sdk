@@ -1,7 +1,7 @@
 {
   "name": "self-sdk",
   "type": "mod",
-  "version": "0.0.60",
+  "version": "0.0.61",
   "description": "",
   "keywords": [],
   "main": "dist/self-sdk.umd.js",
@@ -137,7 +137,7 @@
     "ntpclient": "^1.1.2",
     "open": "^8.0.4",
     "qrcode-generator-ts": "^0.0.3",
-    "self-crypto": "^1.0.27",
+    "self-crypto": "^1.0.29",
     "shelljs": "^0.8.4",
     "string-width": "^5.0.1",
     "text-encoding": "^0.7.0",
