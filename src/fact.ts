@@ -26,6 +26,7 @@ const FACT_SORT_CODE = 'sort_code'
 const FACT_COUNTRY_OF_ISSUANCE = 'country_of_issuance'
 const FACT_ACCOUNT_ID = 'account_id'
 const FACT_NICKNAME = 'nickname'
+const FACT_SELFIE = 'selfie_verification'
 
 const SOURCE_USER_SPECIFIED = 'user_specified'
 const SOURCE_PASSPORT = 'passport'
@@ -34,6 +35,7 @@ const SOURCE_IDENTITY_CARD = 'identity_card'
 const SOURCE_TWITTER = 'twitter'
 const SOURCE_LINKEDIN = 'linkedin'
 const SOURCE_FACEBOOK = 'facebok'
+const SOURCE_LIVE = 'live'
 
 let validSources = [
   SOURCE_USER_SPECIFIED,
@@ -71,6 +73,7 @@ let factsForDL = [
 let factsForTwitter = [FACT_ACCOUNT_ID, FACT_NICKNAME]
 let factsForLinkedin = [FACT_ACCOUNT_ID, FACT_NICKNAME]
 let factsForFacebook = [FACT_ACCOUNT_ID, FACT_NICKNAME]
+let factsForLive = [FACT_SELFIE]
 
 let factsForUser = [FACT_DOCUMENT_NUMBER, FACT_DISPLAY_NAME, FACT_EMAIL, FACT_PHONE]
 const logger = logging.getLogger('core.self-sdk')
@@ -120,7 +123,7 @@ export default class Fact {
 
     let valid = true
     if (input.sources == undefined) {
-      if ([...factsForPassport, ...factsForDL, ...factsForUser, ...factsForTwitter, ...factsForLinkedin, ...factsForFacebook].includes(input.fact) == false) {
+      if ([...factsForPassport, ...factsForDL, ...factsForUser, ...factsForTwitter, ...factsForLinkedin, ...factsForFacebook, ...factsForLive].includes(input.fact) == false) {
         valid = false
       }
     } else {
@@ -171,6 +174,13 @@ export default class Fact {
             return
           }
         }
+        if (s == SOURCE_LIVE) {
+            if (!factsForLive.includes(input.fact)) {
+              logger.warn(errInvalidFactToSource)
+              valid = false
+              return
+            }
+          }
 
       }
     }
