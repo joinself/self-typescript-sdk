@@ -85,6 +85,7 @@ This sdk comes with some examples built to help you have an idea of how or what 
  - `npm run build`: Generate bundles and typings, create docs
  - `npm run lint`: Lints code
  - `npm run commit`: Commit using conventional commit style ([husky](https://github.com/typicode/husky) will tell you to use it if you haven't :wink:)
+ - `npm run generate-sources` : Generates the valid sources based on a json file (tools/config/sources.json).
 
 ## Contributing
 
