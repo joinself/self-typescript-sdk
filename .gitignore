@@ -13,3 +13,4 @@ docs
 src/*.js
 src/msgproto/*.js
 .self_storage/
+_support/sources

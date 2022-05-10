@@ -51,7 +51,7 @@ export default class Fact {
       return false
     }
 
-    let spec = JSON.parse(SOURCE_DEFINITION)["sources"];
+    let spec = SOURCE_DEFINITION["sources"];
     let valid = true
 
     if (input.sources == undefined) { // If source is not provided
