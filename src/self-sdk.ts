@@ -12,6 +12,7 @@ import Crypto from './crypto'
 import { logging, LogEntry, Logger } from './logging'
 import ChatService from './chat-service';
 import DocsService from './docs-service';
+import Requester from './requester';
 
 /**
  * SelfSDK allow you interact with self network.
@@ -28,6 +29,7 @@ export default class SelfSDK {
   ms: any
   logger: Logger
 
+  private requester: Requester
   private authenticationService: any
   private factsService: FactsService
   private identityService: IdentityService
@@ -150,20 +152,15 @@ export default class SelfSDK {
     )
 
     let env = options['env'] ? options['env'] : '-'
-    sdk.factsService = new FactsService(
+    sdk.requester = new Requester(
       sdk.jwt,
       sdk.messagingService,
       sdk.identityService,
       sdk.encryptionClient,
       env
     )
-    sdk.authenticationService = new AuthenticationService(
-      sdk.jwt,
-      sdk.messagingService,
-      sdk.identityService,
-      sdk.encryptionClient,
-      env
-    )
+    sdk.factsService = new FactsService(sdk.requester)
+    sdk.authenticationService = new AuthenticationService(sdk.requester)
     sdk.chatService = new ChatService(
       sdk.messagingService,
       sdk.identityService,

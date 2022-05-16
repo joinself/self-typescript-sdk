@@ -14,6 +14,7 @@ export default class FactResponse {
   sub: string
   iat: string
   exp: string
+  auth: boolean
   facts: Fact[]
 
   public static async parse(input: any, jwt: Jwt, is: IdentityService): Promise<FactResponse> {
@@ -28,6 +29,7 @@ export default class FactResponse {
     r.sub = input.sub
     r.iat = input.iat
     r.exp = input.exp
+    r.auth = input.auth || false
     r.facts = []
 
     for (const fact of input.facts) {
