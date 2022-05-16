@@ -3,17 +3,9 @@ workflow:
     - if: $CI_COMMIT_BRANCH
 
 stages:
-  - prebuild
   - build
-  - test
   - release
   - publish
-
-.license-check: &license-check |
-  npm install
-  source ~/.profile
-  git clone https://${GITHUB_TOKEN}:@github.com/aldgate-ventures/license-finder.git
-  license_finder --decisions_file ./license-finder/dependency_decisions.yml
 
 .setup-environment: &setup-environment |
   export DEBIAN_FRONTEND=noninteractive
@@ -27,12 +19,9 @@ stages:
 
 .build: &build |
   npm install
+  npm run test
   npm run build
   tar -czf artefacts.tar.gz dist docs node_modules
-
-.test: &test |
-  tar -zxf artefacts.tar.gz
-  npm run test
 
 .git-release: &git-release |
   version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
@@ -75,27 +64,23 @@ before_script:
   - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
 
 license-check:
-  stage: prebuild
+  stage: build
   image: licensefinder/license_finder
   script:
-    - ${SCRIPTS_DIR}/git-setup
-    - *license-check
+    - ${SCRIPTS_DIR}/license-check
   allow_failure: true
 
 secrets-check:
-  stage: prebuild
-  image: docker:stable-git
-  services:
-    - docker:20.10.12-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+  stage: build
+  image:
+    name: zricethezav/gitleaks:v8.2.4
+    entrypoint: [""]
   before_script:
     - echo "skip"
   script:
     - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
-    - ${SCRIPTS_DIR}/git-secrets
+    - ${SCRIPTS_DIR}/git-secret-scan
   allow_failure: true
 
 build:
@@ -107,13 +92,6 @@ build:
   artifacts:
     paths:
       - artefacts.tar.gz
-
-test:
-  stage: test
-  image: ubuntu:focal-20210217
-  script:
-    - *setup-environment
-    - *test
 
 release:
   stage: release
