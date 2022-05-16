@@ -7,12 +7,6 @@ stages:
   - release
   - publish
 
-# .license-check: &license-check |
-#   npm install
-#   source ~/.profile
-#   git clone https://${GITHUB_TOKEN}:@github.com/aldgate-ventures/license-finder.git
-#   license_finder --decisions_file ./license-finder/dependency_decisions.yml
-
 .setup-environment: &setup-environment |
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
@@ -73,7 +67,6 @@ license-check:
   stage: build
   image: licensefinder/license_finder
   script:
-    #- ${SCRIPTS_DIR}/git-setup
     - ${SCRIPTS_DIR}/license-check
   allow_failure: true
 
