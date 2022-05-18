@@ -13,11 +13,13 @@ import Crypto from '../src/crypto'
 import EncryptionMock from './mocks/encryption-mock'
 
 import * as flatbuffers from 'flatbuffers'
+import Requester from '../src/requester';
 
 /**
  * Attestation test
  */
 describe('FactsService', () => {
+  let r: Requester
   let fs: FactsService
   let jwt: Jwt
   let ms: Messaging
@@ -43,7 +45,8 @@ describe('FactsService', () => {
     ms.connected = true
     messagingService = new MessagingService(jwt, ms, is, ec)
 
-    fs = new FactsService(jwt, messagingService, is, ec, 'test')
+    r = new Requester(jwt, messagingService, is, ec, 'test')
+    fs = new FactsService(r)
     /*
     jest.spyOn(fs, 'fixEncryption').mockImplementation((msg: string): any => {
       return msg
@@ -324,7 +327,7 @@ describe('FactsService', () => {
 
     it('happy path for development', async () => {
       let callback = 'http://callback.com'
-      fs.env = 'development'
+      r.env = 'development'
       let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
       const url = new URL(link)
 
@@ -345,7 +348,7 @@ describe('FactsService', () => {
 
     it('happy path for production', async () => {
       let callback = 'http://callback.com'
-      fs.env = ''
+      r.env = ''
       let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
       const url = new URL(link)
 

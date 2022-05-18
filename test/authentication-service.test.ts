@@ -13,11 +13,13 @@ import Crypto from '../src/crypto'
 import EncryptionMock from './mocks/encryption-mock'
 
 import * as flatbuffers from 'flatbuffers'
+import Requester from '../src/requester';
 
 /**
  * Attestation test
  */
 describe('AuthenticationService', () => {
+  let r: Requester
   let auth: AuthenticationService
   let jwt: Jwt
   let ms: Messaging
@@ -42,7 +44,8 @@ describe('AuthenticationService', () => {
     ms.connected = true
     messagingService = new MessagingService(jwt, ms, is, ec)
 
-    auth = new AuthenticationService(jwt, messagingService, is, ec, 'test')
+    r = new Requester(jwt, messagingService, is, ec, 'test')
+    auth = new AuthenticationService(r)
 
     /*
     jest.spyOn(auth, 'fixEncryption').mockImplementation((msg: string): any => {
@@ -99,7 +102,7 @@ describe('AuthenticationService', () => {
           let input = msg.ciphertextArray()
           let ciphertext = JSON.parse(Buffer.from(input).toString())
           let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
-          expect(payload.typ).toEqual('identities.authenticate.req')
+          expect(payload.typ).toEqual('identities.facts.query.req')
           expect(payload.iss).toEqual('appID')
           expect(payload.sub).toEqual('26742678155')
           expect(payload.aud).toEqual('26742678155')
@@ -265,7 +268,7 @@ describe('AuthenticationService', () => {
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
       )
       let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
-      expect(payload.typ).toEqual('identities.authenticate.req')
+      expect(payload.typ).toEqual('identities.facts.query.req')
       expect(payload.iss).toEqual('appID')
       expect(payload.sub).toEqual('-')
       expect(payload.aud).toEqual('-')
@@ -284,7 +287,7 @@ describe('AuthenticationService', () => {
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
       )
       let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
-      expect(payload.typ).toEqual('identities.authenticate.req')
+      expect(payload.typ).toEqual('identities.facts.query.req')
       expect(payload.iss).toEqual('appID')
       expect(payload.sub).toEqual('selfid')
       expect(payload.aud).toEqual('selfid')
@@ -294,7 +297,7 @@ describe('AuthenticationService', () => {
 
     it('happy path for development', async () => {
       let callback = 'http://callback.com'
-      auth.env = 'development'
+      r.env = 'development'
       let link = auth.generateDeepLink(callback, { selfid: 'selfid', cid: 'cid' })
       const url = new URL(link)
 
@@ -305,7 +308,7 @@ describe('AuthenticationService', () => {
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
       )
       let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
-      expect(payload.typ).toEqual('identities.authenticate.req')
+      expect(payload.typ).toEqual('identities.facts.query.req')
       expect(payload.iss).toEqual('appID')
       expect(payload.sub).toEqual('selfid')
       expect(payload.aud).toEqual('selfid')
@@ -315,7 +318,7 @@ describe('AuthenticationService', () => {
 
     it('happy path for production', async () => {
       let callback = 'http://callback.com'
-      auth.env = ''
+      r.env = ''
       let link = auth.generateDeepLink(callback, { selfid: 'selfid', cid: 'cid' })
       const url = new URL(link)
 
@@ -326,7 +329,7 @@ describe('AuthenticationService', () => {
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
       )
       let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
-      expect(payload.typ).toEqual('identities.authenticate.req')
+      expect(payload.typ).toEqual('identities.facts.query.req')
       expect(payload.iss).toEqual('appID')
       expect(payload.sub).toEqual('selfid')
       expect(payload.aud).toEqual('selfid')
@@ -347,7 +350,7 @@ describe('AuthenticationService', () => {
       const msMock = jest
         .spyOn(ms, 'subscribe')
         .mockImplementation((messageType: string, callback: (n: any) => any) => {
-          expect(messageType).toEqual('identities.authenticate.resp')
+          expect(messageType).toEqual('identities.facts.query.resp')
         })
 
       expect(auth.subscribe((n: any): any => {})).toBeUndefined()
