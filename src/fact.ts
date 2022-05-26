@@ -14,6 +14,7 @@ export default class Fact {
   expected_value?: string
   sources?: string[]
   attestations?: Attestation[]
+  issuers?: string[]
 
   public static async parse(input: any, jwt: Jwt, is: IdentityService): Promise<Fact> {
     let f = this.simpleParse(input)
@@ -53,6 +54,10 @@ export default class Fact {
 
     let spec = SOURCE_DEFINITION["sources"];
     let valid = true
+
+    if (input.issuers.length > 0) {
+      return true
+    }
 
     if (input.sources == undefined) { // If source is not provided
       // check if the fact exists
