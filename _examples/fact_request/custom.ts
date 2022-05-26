@@ -23,10 +23,9 @@ async function request(appID: string, appSecret: string, selfID: string) {
       displayName: "Display name",
       group: new Group("group name", "plane")
     })
-/*
+
     await sdk.facts().issue(selfID, source, [fact])
     await delay(10000);
-*/
     sdk.logger.info(`sending a fact request (${fact.key}) to ${selfID}`)
     sdk.logger.info(`waiting for user input`)
 

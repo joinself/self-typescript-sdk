@@ -40,7 +40,6 @@ export default class FactResponse {
   }
 
   fact(name: string): Fact | undefined {
-    console.log(this.facts)
     for (const fact of this.facts) {
       if (fact.fact === name) {
         return fact

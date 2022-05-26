@@ -55,7 +55,7 @@ export default class Fact {
     let spec = SOURCE_DEFINITION["sources"];
     let valid = true
 
-    if (input.issuers.length > 0) {
+    if (input.issuers && input.issuers.length > 0) {
       return true
     }
 
