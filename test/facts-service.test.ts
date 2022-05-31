@@ -14,6 +14,7 @@ import EncryptionMock from './mocks/encryption-mock'
 
 import * as flatbuffers from 'flatbuffers'
 import Requester from '../src/requester';
+import { FactToIssue, Group } from '../src/facts-service';
 
 /**
  * Attestation test
@@ -390,4 +391,93 @@ describe('FactsService', () => {
       expect(fs.subscribe((n: any): any => {})).toBeUndefined()
     })
   })
+
+  describe('FactsService::issue', () => {
+    let history = require('./__fixtures__/valid_custom_device_entry.json')
+    it('happy path', async () => {
+      const axios = require('axios')
+
+      jest.mock('axios')
+      axios.get.mockResolvedValueOnce({
+        status: 200,
+        data: ['cjK0uSMXQjKeaKGaibkVGZ']
+      })
+
+      axios.get.mockResolvedValueOnce({
+        status: 200,
+        data: { id: '26742678155', history: history }
+      })
+
+      jest.spyOn(is, 'app').mockImplementation(
+        (appID: string): Promise<any> => {
+          return new Promise(resolve => {
+            resolve({ paid_actions: true })
+          })
+        }
+      )
+      jest.spyOn(messagingService, 'isPermited').mockImplementation(
+        (selfid: string): Promise<Boolean> => {
+          return new Promise(resolve => {
+            resolve(true)
+          })
+        }
+      )
+
+      const msMock = jest.spyOn(ms, 'send').mockImplementation(
+        (cid: string, data): Promise<any> => {
+          // The cid is automatically generated
+          expect(cid.length).toEqual(36)
+          // The cid is automatically generated
+          let buf = new flatbuffers.ByteBuffer(data.data[0].valueOf() as Uint8Array)
+          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+
+          // Envelope
+          expect(msg.id().length).toEqual(36)
+          expect(msg.recipient()).toEqual('26742678155:cjK0uSMXQjKeaKGaibkVGZ')
+          expect(msg.sender()).toEqual('appID:1')
+          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
+
+          // Check ciphertext
+          let input = msg.ciphertextArray()
+          let ciphertext = JSON.parse(Buffer.from(input).toString())
+          let payload = JSON.parse(Buffer.from(ciphertext['payload'], 'base64').toString())
+          expect(payload.typ).toEqual('identities.facts.issue')
+          expect(payload.iss).toEqual('appID')
+          expect(payload.sub).toEqual('26742678155')
+          expect(payload.aud).toEqual('26742678155')
+          expect(payload.cid).toEqual(cid)
+          expect(payload.jti.length).toEqual(36)
+          expect(payload.facts).toEqual(undefined)
+          expect(payload.attestations.length).toEqual(1)
+
+          let at = JSON.parse(Buffer.from(payload.attestations[0].payload, 'base64').toString())
+          expect(at.iss).toEqual('appID')
+          expect(at.sub).toEqual('26742678155')
+          expect(at.source).toEqual('source')
+          expect(at.verified).toEqual(true)
+          expect(at.facts.length).toEqual(1)
+          expect(at.facts[0].key).toEqual('foo')
+          expect(at.facts[0].value).toEqual('bar')
+          expect(at.facts[0].display_name).toEqual('Display name')
+          expect(at.facts[0].group.name).toEqual('group name')
+          expect(at.facts[0].group.icon).toEqual('plane')
+
+          return new Promise(resolve => {
+            resolve({ status: 'accepted' })
+          })
+        }
+      )
+
+      let selfid = "26742678155"
+      let source = "source"
+      let fact = new FactToIssue("foo", "bar", {
+        displayName: "Display name",
+        group: new Group("group name", "plane")
+      })
+
+      await fs.issue(selfid, source, [ fact ])
+    })
+
+  })
+
 })

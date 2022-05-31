@@ -29,6 +29,8 @@ export default class Attestation {
 
     let a = new Attestation()
 
+    console.log(payload)
+
     a.to = payload.sub
     a.origin = payload.iss
     a.aud = payload.aud
@@ -36,7 +38,19 @@ export default class Attestation {
     a.expected_value = payload.expected_value
     a.operator = payload.operator
     a.factName = name
-    a.value = payload[name]
+    if (!(name in payload) || payload[name] == undefined) {
+      if (payload['facts'] == undefined) {
+        return
+      } else {
+        for (var i = 0; i < payload['facts'].length; i++) {
+          if (payload['facts'][i]['key'] == name) {
+            a.value = payload['facts'][i]['value']
+          }
+        }
+      }
+    } else {
+      a.value = payload[name]
+    }
 
     const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
     let header = JSON.parse(decode(input['protected']))
