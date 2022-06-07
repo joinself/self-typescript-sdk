@@ -19,12 +19,12 @@ async function request(appID: string, appSecret: string, selfID: string) {
     const sdk = await SelfSDK.build( appID, appSecret, "random", storageFolder, opts);
 
     let source = "supu"
-    let fact = new FactToIssue("foo", "bar", {
+    let fact = new FactToIssue("foo", "bar", source, {
       displayName: "Display name",
       group: new Group("group name", "plane")
     })
 
-    await sdk.facts().issue(selfID, source, [fact])
+    await sdk.facts().issue(selfID, [fact])
     await delay(10000);
     sdk.logger.info(`sending a fact request (${fact.key}) to ${selfID}`)
     sdk.logger.info(`waiting for user input`)
