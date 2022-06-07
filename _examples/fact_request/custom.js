@@ -58,21 +58,23 @@ function request(appID, appSecret, selfID) {
                 case 1:
                     sdk = _a.sent();
                     source = "supu";
-                    fact = new facts_service_1.FactToIssue("foo", "bar", {
+                    fact = new facts_service_1.FactToIssue("foo", "bar", source, {
                         displayName: "Display name",
                         group: new facts_service_1.Group("group name", "plane")
                     });
-                    /*
-                        await sdk.facts().issue(selfID, source, [fact])
-                        await delay(10000);
-                    */
+                    return [4 /*yield*/, sdk.facts().issue(selfID, [fact])];
+                case 2:
+                    _a.sent();
+                    return [4 /*yield*/, delay(10000)];
+                case 3:
+                    _a.sent();
                     sdk.logger.info("sending a fact request (" + fact.key + ") to " + selfID);
                     sdk.logger.info("waiting for user input");
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 4, , 5]);
+                    _a.label = 4;
+                case 4:
+                    _a.trys.push([4, 6, , 7]);
                     return [4 /*yield*/, sdk.facts().request(selfID, [{ fact: fact.key, issuers: [appID] }])];
-                case 3:
+                case 5:
                     res = _a.sent();
                     if (!res) {
                         sdk.logger.warn("fact request has timed out");
@@ -84,12 +86,12 @@ function request(appID, appSecret, selfID) {
                     else {
                         sdk.logger.warn(selfID + " has rejected your authentication request");
                     }
-                    return [3 /*break*/, 5];
-                case 4:
+                    return [3 /*break*/, 7];
+                case 6:
                     error_1 = _a.sent();
                     sdk.logger.error(error_1.toString());
-                    return [3 /*break*/, 5];
-                case 5:
+                    return [3 /*break*/, 7];
+                case 7:
                     sdk.close();
                     process_1.exit();
                     return [2 /*return*/];

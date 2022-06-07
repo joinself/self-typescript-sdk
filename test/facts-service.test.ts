@@ -470,12 +470,12 @@ describe('FactsService', () => {
 
       let selfid = "26742678155"
       let source = "source"
-      let fact = new FactToIssue("foo", "bar", {
+      let fact = new FactToIssue("foo", "bar", source, {
         displayName: "Display name",
         group: new Group("group name", "plane")
       })
 
-      await fs.issue(selfid, source, [ fact ])
+      await fs.issue(selfid, [ fact ])
     })
 
   })

@@ -100,17 +100,16 @@ export default class FactsService {
   /**
    * Issues a fact to a specific user.
    * @param selfid self identifier for the recipient
-   * @param source source for the current fact/s
    * @param facts list of facts to be issued
    * @param opts optional parameters like the list of viewers of the fact
    */
-  async issue(selfid: string, source: string, facts: FactToIssue[], opts?: { viewers?: String[]}) {
+  async issue(selfid: string, facts: FactToIssue[], opts?: { viewers?: String[]}) {
     let id = uuidv4()
 
     // Get user's device
     let devices = await this.requester.is.devices(selfid)
 
-    let c = this.buildIssueRequest(selfid, source, facts, opts)
+    let c = this.buildIssueRequest(selfid, facts, opts)
     let ciphertext = this.requester.jwt.toSignedJson(c)
 
     var msgs = []
@@ -123,7 +122,7 @@ export default class FactsService {
     this.requester.ms.send(c.cid, { data: msgs, waitForResponse: false })
   }
 
-  private buildIssueRequest(selfid: string, source: string, facts: FactToIssue[], opts?: { cid?: string, exp?: number, viewers?: String[]}): {[k: string]: any} {
+  private buildIssueRequest(selfid: string, facts: FactToIssue[], opts?: { cid?: string, exp?: number, viewers?: String[]}): {[k: string]: any} {
     let options = opts ? opts : {}
     let cid = options.cid ? options.cid : uuidv4()
     let expTimeout = options.exp ? options.exp : 300000
@@ -138,7 +137,7 @@ export default class FactsService {
         sub: selfid,
         iss: this.requester.jwt.appID,
         iat: iat.toISOString(),
-        source: source,
+        source: facts[i]['source'],
         verified: true,
         facts: [ facts[i] ] }
 
@@ -173,14 +172,16 @@ export default class FactsService {
 export class FactToIssue {
   key: string
   value: string
+  source: string
   display_name?: string
   group?: Group
 
-  constructor(key: string, value: string, opts?: {displayName?: string, group?: Group}) {
+  constructor(key: string, value: string, source: string, opts?: {displayName?: string, group?: Group}) {
     let options = opts ? opts : {}
 
     this.key = key
     this.value = value
+    this.source = source
 
     if("displayName" in options) {
       this.display_name = options["displayName"]
