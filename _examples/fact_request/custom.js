@@ -59,7 +59,6 @@ function request(appID, appSecret, selfID) {
                     sdk = _a.sent();
                     source = "supu";
                     fact = new facts_service_1.FactToIssue("foo", "bar", source, {
-                        displayName: "Display name",
                         group: new facts_service_1.Group("group name", "plane")
                     });
                     return [4 /*yield*/, sdk.facts().issue(selfID, [fact])];

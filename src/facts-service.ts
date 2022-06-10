@@ -173,19 +173,14 @@ export class FactToIssue {
   key: string
   value: string
   source: string
-  display_name?: string
   group?: Group
 
-  constructor(key: string, value: string, source: string, opts?: {displayName?: string, group?: Group}) {
+  constructor(key: string, value: string, source: string, opts?: {group?: Group}) {
     let options = opts ? opts : {}
 
     this.key = key
     this.value = value
     this.source = source
-
-    if("displayName" in options) {
-      this.display_name = options["displayName"]
-    }
 
     if("group" in options) {
       this.group = options["group"]
