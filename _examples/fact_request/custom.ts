@@ -20,7 +20,6 @@ async function request(appID: string, appSecret: string, selfID: string) {
 
     let source = "supu"
     let fact = new FactToIssue("foo", "bar", source, {
-      displayName: "Display name",
       group: new Group("group name", "plane")
     })
 

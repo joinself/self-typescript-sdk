@@ -458,7 +458,6 @@ describe('FactsService', () => {
           expect(at.facts.length).toEqual(1)
           expect(at.facts[0].key).toEqual('foo')
           expect(at.facts[0].value).toEqual('bar')
-          expect(at.facts[0].display_name).toEqual('Display name')
           expect(at.facts[0].group.name).toEqual('group name')
           expect(at.facts[0].group.icon).toEqual('plane')
 
@@ -471,7 +470,6 @@ describe('FactsService', () => {
       let selfid = "26742678155"
       let source = "source"
       let fact = new FactToIssue("foo", "bar", source, {
-        displayName: "Display name",
         group: new Group("group name", "plane")
       })
 
