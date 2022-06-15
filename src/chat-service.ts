@@ -6,22 +6,29 @@ import { logging, Logger } from './logging'
 import { ChatMessage } from './chat-message';
 import { FileObject } from './chat-object';
 import { ChatGroup } from './chat-group';
+import { ErrorCorrectLevel, QRCode } from 'qrcode-generator-ts';
+import { v4 as uuidv4 } from 'uuid';
+import { Hash } from 'crypto';
 
 
 export default class ChatService {
   is: IdentityService
   ms: MessagingService
   logger: Logger
+  env: string
 
   /**
    * Creates a new ChatService object.
    * @param ms messaging service.
    * @param is identity service.
    */
-  constructor(ms: MessagingService, is: IdentityService) {
+  constructor(ms: MessagingService, is: IdentityService, opts?: { env?: string}) {
     this.ms = ms
     this.is = is
     this.logger = logging.getLogger('core.self-sdk')
+
+    let options = opts ? opts : {}
+    this.env = options.env ? options.env : ""
   }
 
   /**
@@ -219,6 +226,74 @@ export default class ChatService {
     })
   }
 
+  /**
+   * Generates a connection request in form of QR
+   * @param opts allows you specify optional parameters the expiration time.
+   */
+  generateConnectionQR(opts?: { exp?: number }): Buffer {
+    let body = this.buildConnectionRequest(opts)
+
+    let qr = new QRCode()
+    qr.setTypeNumber(20)
+    qr.setErrorCorrectLevel(ErrorCorrectLevel.L)
+    qr.addData(body)
+    qr.make()
+
+    let data = qr.toDataURL(5).split(',')
+    let buf = Buffer.from(data[1], 'base64')
+
+    return buf
+  }
+
+  /**
+   * Generates a connection request in form of deep link
+   * @param callback the url you want your users to be sent back after connection.
+   * @param opts allows you specify optional parameters the expiration time.
+   */
+  generateConnectionDeepLink(callback: string, opts?: { exp?: number }): string {
+    let body = this.buildConnectionRequest(opts)
+    let encodedBody = this.is.jwt.encode(body)
+
+    if (this.env === '') {
+      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app`
+    } else if (this.env === 'development') {
+      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.dev`
+    }
+    return `https://${this.env}.links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.${this.env}`
+  }
+
+  private buildConnectionRequest(opts?: { exp?: number }): string {
+    let options = opts ? opts : {}
+    let expTimeout = options.exp ? options.exp : 300000
+
+    // Calculate expirations
+    let iat = new Date(Math.floor(this.is.jwt.now()))
+    let exp = new Date(Math.floor(this.is.jwt.now() + expTimeout * 60))
+
+    let req = {
+        typ: "identities.connections.req",
+        iss: this.is.jwt.appID,
+        aud: "-",
+        sub: "-",
+        iat: iat.toISOString(),
+        exp: exp.toISOString(),
+        jti: uuidv4(),
+        require_confirmation: true,
+    }
+    let body = this.is.jwt.toSignedJson(req)
+
+    return body
+  }
+
+  /**
+   * Subscribes to group invitations.
+   * @param callback function to be executed when a connection message is received.
+   */
+   onConnection(callback: (cm: ChatGroup) => {}) {
+    this.ms.subscribe('identities.connections.resp', async (payload: any): Promise<any> =>{
+      callback(payload)
+    })
+  }
   // Group invites may come with members of the group we haven't set up a session
   // previously, for those identitiese need to establish a session, but only if
   // our identity appears before the others in the list members.
