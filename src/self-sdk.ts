@@ -164,6 +164,7 @@ export default class SelfSDK {
     sdk.chatService = new ChatService(
       sdk.messagingService,
       sdk.identityService,
+      { env: env }
     )
     sdk.docsService = new DocsService(
       sdk.messagingService,
