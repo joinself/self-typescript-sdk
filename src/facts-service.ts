@@ -137,6 +137,7 @@ export default class FactsService {
         sub: selfid,
         iss: this.requester.jwt.appID,
         iat: iat.toISOString(),
+        exp: exp.toISOString(),
         source: facts[i]['source'],
         verified: true,
         facts: [ facts[i] ] }
