@@ -175,8 +175,9 @@ export class FactToIssue {
   value: string
   source: string
   group?: Group
+  type?: string
 
-  constructor(key: string, value: string, source: string, opts?: {group?: Group}) {
+  constructor(key: string, value: string, source: string, opts?: {group?: Group, type?: string}) {
     let options = opts ? opts : {}
 
     this.key = key
@@ -185,6 +186,9 @@ export class FactToIssue {
 
     if("group" in options) {
       this.group = options["group"]
+    }
+    if("type" in options) {
+      this.type = options["type"]
     }
   }
 
@@ -200,6 +204,56 @@ export class Group {
   constructor(name: string, icon: string = "") {
     this.name = name
     this.icon = icon
+  }
+}
+
+export class Delegation {
+  TYPE = "delegation_certificate"
+  subjects: string[]
+  actions: string[]
+  effect: string
+  resources: string[]
+  conditions: string[]
+  description: string
+
+  constructor(subjects: string[], actions: string[], effect: string, resources: string[], opts?: {conditions?: string[], description?: string}) {
+    let options = opts ? opts : {}
+
+    this.subjects = subjects
+    this.actions = actions
+    this.effect = effect
+    this.resources = resources
+    if("conditions" in options) {
+      this.conditions = options["conditions"]
+    }
+    if("description" in options) {
+      this.description = options["description"]
+    }
+  }
+
+  encode():string {
+    let cert = JSON.stringify({
+      subjects: this.subjects,
+      actions: this.actions,
+      effect: this.effect,
+      resources: this.resources,
+    })
+
+    return Buffer.from(cert).toString('base64')
+
+    // return btoa(cert)
+  }
+
+  static parse(input: string) {
+
+    let b = JSON.parse(Buffer.from(input, 'base64').toString())
+    return new Delegation(
+      b.subjects,
+      b.actions,
+      b.effect,
+      b.resources,
+      { conditions: b.conditions, description: b.description }
+    )
   }
 }
 
