@@ -64,4 +64,12 @@ export default class FactResponse {
     }
     return att
   }
+
+  attestationObjectsFor(name: string): string[] {
+    let objs = []
+    for (const at of this.attestationsFor(name)) {
+      objs.push(at.objects)
+    }
+    return objs
+  }
 }

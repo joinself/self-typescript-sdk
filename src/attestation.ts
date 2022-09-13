@@ -3,6 +3,7 @@
 import Jwt from './jwt'
 import IdentityService from './identity-service'
 import { JwtInput } from './jwt'
+import { FileObject } from './chat-object';
 
 export default class Attestation {
   origin: string
@@ -16,6 +17,7 @@ export default class Attestation {
   operator: string
   factName: string
   value: string
+  objects: FileObject[]
   is: IdentityService
   jwt: Jwt
 

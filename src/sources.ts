@@ -7,6 +7,7 @@ export const SOURCE_DEFINITION = {
 			"phone_number"
 		],
 		"passport": [
+			"photo",
 			"document_number",
 			"surname",
 			"given_names",
