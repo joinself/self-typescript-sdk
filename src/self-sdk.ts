@@ -55,12 +55,25 @@ export default class SelfSDK {
     opts?: { baseURL?: string; messagingURL?: string; env?: string; autoReconnect?: boolean }
   ) {
     this.appID = appID
-    this.appKey = appKey
+    this.appKey = this.keyCleanup(appKey)
     this.storageKey = storageKey
 
     this.baseURL = this.calculateBaseURL(opts)
     this.messagingURL = this.calculateMessagingURL(opts)
     // this.autoReconnect = opts?.autoReconnect ? opts?.autoReconnect : true;
+  }
+
+  /**
+   * Cleans up a given key
+   * @param key
+   * @returns
+   */
+  private keyCleanup(key: string): string {
+    if(!key.includes("_")) {
+      return key
+    }
+
+    key.split("_")[1]
   }
 
   /**
