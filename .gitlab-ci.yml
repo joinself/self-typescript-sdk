@@ -65,7 +65,7 @@ before_script:
 
 license-check:
   stage: build
-  image: licensefinder/license_finder
+  image: joinself/license-finder:node
   script:
     - ${SCRIPTS_DIR}/license-check
   allow_failure: true
