@@ -55,25 +55,12 @@ export default class SelfSDK {
     opts?: { baseURL?: string; messagingURL?: string; env?: string; autoReconnect?: boolean }
   ) {
     this.appID = appID
-    this.appKey = this.keyCleanup(appKey)
+    this.appKey = keyCleanup(appKey)
     this.storageKey = storageKey
 
     this.baseURL = this.calculateBaseURL(opts)
     this.messagingURL = this.calculateMessagingURL(opts)
     // this.autoReconnect = opts?.autoReconnect ? opts?.autoReconnect : true;
-  }
-
-  /**
-   * Cleans up a given key
-   * @param key
-   * @returns
-   */
-  private keyCleanup(key: string): string {
-    if(!key.includes("_")) {
-      return key
-    }
-
-    return key.split("_")[1]
   }
 
   /**
@@ -121,6 +108,7 @@ export default class SelfSDK {
       })
       .registerConsoleLogger()
 
+    appKey = keyCleanup(appKey)
     const sdk = new SelfSDK(appID, appKey, storageKey, opts)
     sdk.logger = logging.getLogger('core.self-sdk')
     sdk.jwt = await Jwt.build(appID, appKey, opts)
@@ -282,4 +270,17 @@ export default class SelfSDK {
     }
     throw new Error('identity does not exist')
   }
+}
+
+/**
+ * Cleans up a given key
+ * @param key
+ * @returns
+ */
+  const keyCleanup = (key: string): string => {
+  if(!key.includes("_")) {
+    return key
+  }
+
+  return key.split("_")[1]
 }
