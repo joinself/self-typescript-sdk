@@ -73,7 +73,7 @@ export default class SelfSDK {
       return key
     }
 
-    key.split("_")[1]
+    return key.split("_")[1]
   }
 
   /**
