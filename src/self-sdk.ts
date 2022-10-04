@@ -13,6 +13,7 @@ import { logging, LogEntry, Logger } from './logging'
 import ChatService from './chat-service';
 import DocsService from './docs-service';
 import Requester from './requester';
+import { IOManager } from './storage';
 
 /**
  * SelfSDK allow you interact with self network.
@@ -94,6 +95,7 @@ export default class SelfSDK {
       encryptionClient?: Crypto
       logLevel?: string,
       checkPaidActions?: boolean,
+      stateManager?: IOManager
     }
   ): Promise<SelfSDK> {
     let options = opts ? opts : {}

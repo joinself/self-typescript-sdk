@@ -3,6 +3,8 @@
 import { v4 as uuidv4 } from 'uuid'
 import { NTPClient } from 'ntpclient'
 import { logging, Logger } from './logging'
+import { IOManager } from './storage'
+import FsStore from './storage';
 
 const _sodium = require('libsodium-wrappers')
 const logger = logging.getLogger('core.self-sdk')
@@ -24,6 +26,7 @@ export default class Jwt {
   ntpSynchronization: any
   diffDates: any
   checkPaidActions: boolean
+  stateManager: IOManager
 
   constructor() {
     this.appID = ''
@@ -32,7 +35,12 @@ export default class Jwt {
     this.deviceID = '1'
   }
 
-  public static async build(appID: string, appKey: string, opts?: { ntp?: boolean, deviceID?: string, checkPaidActions?: boolean }): Promise<Jwt> {
+  public static async build(appID: string, appKey: string, opts?: {
+      ntp?: boolean,
+      deviceID?: string,
+      checkPaidActions?: boolean,
+      stateManager?: IOManager
+    }): Promise<Jwt> {
     let jwt = new Jwt()
     jwt.appID = appID
 
@@ -45,6 +53,12 @@ export default class Jwt {
 
     /* istanbul ignore next */
     let ntp = 'ntp' in opts ? opts.ntp : true
+
+    if ('stateManager' in opts) {
+      jwt.stateManager = opts.stateManager
+    } else {
+      jwt.stateManager = new FsStore()
+    }
 
     if ('deviceID' in opts) {
       jwt.deviceID = opts.deviceID
