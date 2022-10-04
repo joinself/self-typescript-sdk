@@ -30,13 +30,12 @@ export default class Crypto {
     storageKey: string
   ): Promise<Crypto> {
     let cc = new Crypto(client, device, storageFolder, storageKey)
-    const fs = require('fs')
     const crypto = require('self-crypto')
 
-    if (fs.existsSync(cc.accountPath())) {
+    if (cc.client.jwt.stateManager.exists(cc.accountPath())) {
       // 1a) if alice's account file exists load the pickle from the file
-      let pickle = fs.readFileSync(cc.accountPath())
-      cc.account = crypto.unpickle_account(pickle.toString(), cc.storageKey)
+      let pickle = cc.client.jwt.stateManager.read(cc.accountPath())
+      cc.account = crypto.unpickle_account(pickle, cc.storageKey)
     } else {
       // 1b-i) if create a new account for alice if one doesn't exist already
       cc.account = crypto.create_olm_account_derrived_keys(cc.client.jwt.appKey)
@@ -62,7 +61,7 @@ export default class Crypto {
 
       // 1b-v) store the account to a file
       let pickle = crypto.pickle_account(cc.account, cc.storageKey)
-      fs.writeFileSync(cc.accountPath(), pickle, { mode: 0o600 })
+      cc.client.jwt.stateManager.write(cc.accountPath(), pickle, { mode: 0o600 })
     }
 
     return cc
@@ -70,7 +69,6 @@ export default class Crypto {
 
   public async encrypt(message: string, recipients: Recipient[]): Promise<Uint8Array> {
     this.logger.debug('encrypting a message')
-    const fs = require('fs')
     const crypto = require('self-crypto')
 
     // create a group session and set the identity of the account youre using
@@ -105,7 +103,7 @@ export default class Crypto {
     this.logger.debug('storing sessions')
     for (const file in sessions) {
       let pickle = crypto.pickle_session(sessions[file], this.storageKey)
-      fs.writeFileSync(file, pickle, { mode: 0o600 })
+      this.client.jwt.stateManager.write(file, pickle, { mode: 0o600 })
     }
 
     return ciphertext
@@ -137,7 +135,7 @@ export default class Crypto {
     // 11) store the session to a file
     this.logger.debug(`store the session to a file`)
     let pickle = crypto.pickle_session(session_with_bob, this.storageKey)
-    fs.writeFileSync(session_file_name, pickle, { mode: 0o600 })
+    this.client.jwt.stateManager.write(session_file_name, pickle, { mode: 0o600 })
 
     return plaintextext
   }
@@ -152,7 +150,6 @@ export default class Crypto {
 
 
   async getInboundSessionWithBob(message: Uint8Array, session_file_name: string): Promise<any> {
-    const fs = require('fs')
     const crypto = require('self-crypto')
 
     let session_with_bob: any
@@ -163,11 +160,11 @@ export default class Crypto {
     let mtype = group_message_json['recipients'][myID]['mtype']
     let ciphertext = group_message_json['recipients'][myID]['ciphertext']
 
-    if (fs.existsSync(session_file_name)) {
+    if (this.client.jwt.stateManager.exists(session_file_name)) {
         // 7a) if bobs's session file exists load the pickle from the file
         this.logger.debug(` bobs's session file exists load the pickle from the file`)
-        let session = fs.readFileSync(session_file_name)
-        session_with_bob = crypto.unpickle_session(session.toString(), this.storageKey)
+        let session = this.client.jwt.stateManager.read(session_file_name)
+        session_with_bob = crypto.unpickle_session(session, this.storageKey)
     }
 
     if (session_with_bob == null || mtype == 0 && !crypto.matches_inbound_session(session_with_bob, ciphertext)) {
@@ -182,7 +179,7 @@ export default class Crypto {
         this.logger.debug(` store the session to a file`)
         // 7b-iii) store the session to a file
         let pickle = crypto.pickle_session(session_with_bob, this.storageKey)
-        fs.writeFileSync(session_file_name, pickle, { mode: 0o600 })
+        this.client.jwt.stateManager.write(session_file_name, pickle, { mode: 0o600 })
 
         this.logger.debug(` remove the sessions prekey from the account`)
         // 7c-i) remove the sessions prekey from the account
@@ -223,24 +220,23 @@ export default class Crypto {
         this.logger.debug(` publish new prekeys if the amount of remaining keys has fallen below a threshold`)
         // 7e-i) save the account state
         let account_pickle = crypto.pickle_account(this.account, this.storageKey)
-        fs.writeFileSync(this.accountPath(), account_pickle, { mode: 0o600 })
+        this.client.jwt.stateManager.write(this.accountPath(), account_pickle, { mode: 0o600 })
       }
 
       return session_with_bob
   }
 
   async getOutboundSessionWithBob(recipient: string, recipientDevice: string, session_file_name: string): Promise<any> {
-    const fs = require('fs')
     const crypto = require('self-crypto')
 
     let session_with_bob: any
 
     this.logger.debug(`getting outbound session with bob`)
-    if (fs.existsSync(session_file_name)) {
+    if (this.client.jwt.stateManager.exists(session_file_name)) {
         // 2a) if bob's session file exists load the pickle from the file
         this.logger.debug(`  bob's session file exists load the pickle from the file`)
-        let session = fs.readFileSync(session_file_name)
-        session_with_bob = crypto.unpickle_session(session.toString(), this.storageKey)
+        let session = this.client.jwt.stateManager.read(session_file_name)
+        session_with_bob = crypto.unpickle_session(session, this.storageKey)
       } else {
         this.logger.debug(`  get bob's prekeys`)
         // 2b-i) if you have not previously sent or recevied a message to/from bob,
@@ -270,7 +266,7 @@ export default class Crypto {
 
         // 2b-v) store the session to a file
         let pickle = crypto.pickle_session(session_with_bob, this.storageKey)
-        fs.writeFileSync(session_file_name, pickle, { mode: 0o600 })
+        this.client.jwt.stateManager.write(session_file_name, pickle, { mode: 0o600 })
       }
 
       return session_with_bob

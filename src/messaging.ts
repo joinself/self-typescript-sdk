@@ -431,13 +431,13 @@ export default class Messaging {
   }
 
   private setOffset(offset: number) {
-    fs.writeFileSync(this.offsetPath, offset.toString(), { flag: 'w' })
+    this.jwt.stateManager.write(this.offsetPath, offset.toString())
   }
 
   // hasSession checks if a session with a specific identifier and device has already been
   // initialised.
   public hasSession(identifier: string, device: string): boolean {
     let path = this.encryptionClient.sessionPath(identifier, device)
-    return fs.existsSync(path)
+    return this.jwt.stateManager.exists(path)
   }
 }
