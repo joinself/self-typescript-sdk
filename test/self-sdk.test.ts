@@ -6,6 +6,8 @@ import FactsService from '../src/facts-service'
 import MessagingService from '../src/messaging-service'
 import IdentityService from '../src/identity-service'
 import EncryptionMock from './mocks/encryption-mock'
+import VoiceService from '../src/voice-service';
+import DocsService from '../src/docs-service';
 
 /**
  * SelfSDK test
@@ -55,6 +57,15 @@ describe('SelfSDK test', () => {
   it('returns an identity service', () => {
     expect(sdk.identity()).toBeInstanceOf(IdentityService)
   })
+
+  it('returns an docs service', () => {
+    expect(sdk.docs()).toBeInstanceOf(DocsService)
+  })
+
+  it('returns an voice service', () => {
+    expect(sdk.voice()).toBeInstanceOf(VoiceService)
+  })
+
 
   it('default urls point to production', () => {
     expect(sdk['calculateBaseURL']({})).toEqual(sdk.defaultBaseURL)
