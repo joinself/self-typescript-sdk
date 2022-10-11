@@ -47,7 +47,6 @@ export default class VoiceService {
   start(recipient: string, cid: string, call_id: string, peer_info: string, data: any) {
     var payload = { typ: "chat.voice.start" }
     payload['cid'] = cid
-    payload['cid'] = cid
     payload['call_id'] = call_id
     payload['peer_info'] = peer_info
     payload['data'] = data
