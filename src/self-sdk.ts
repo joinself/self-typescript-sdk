@@ -14,6 +14,7 @@ import ChatService from './chat-service';
 import DocsService from './docs-service';
 import Requester from './requester';
 import { IOManager } from './storage';
+import VoiceService from './voice-service';
 
 /**
  * SelfSDK allow you interact with self network.
@@ -37,6 +38,7 @@ export default class SelfSDK {
   private messagingService: MessagingService
   private chatService: ChatService
   private docsService: DocsService
+  private voiceService: VoiceService
   private encryptionClient: Crypto
 
   defaultBaseURL = 'https://api.joinself.com'
@@ -173,6 +175,9 @@ export default class SelfSDK {
       sdk.messagingService,
       sdk.identityService.url,
     )
+    sdk.voiceService = new VoiceService(
+      sdk.messagingService
+    )
 
     return sdk
   }
@@ -221,16 +226,24 @@ export default class SelfSDK {
    * Access the chat service
    * @returns ChatService
    */
-   chat(): ChatService {
+  chat(): ChatService {
     return this.chatService
   }
 
   /**
-   * Access the chat service
+   * Access the docs service
    * @returns ChatService
    */
-   docs(): DocsService {
+  docs(): DocsService {
     return this.docsService
+  }
+
+  /**
+   * Access the voice service
+   * @returns ChatService
+   */
+  voice(): VoiceService {
+      return this.voiceService
   }
 
   private calculateBaseURL(opts?: { baseURL?: string; env?: string }) {
