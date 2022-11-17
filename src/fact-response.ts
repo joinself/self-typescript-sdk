@@ -4,7 +4,10 @@ import Fact from './fact'
 import Jwt from './jwt'
 import IdentityService from './identity-service'
 import Attestation from './attestation'
+import { FileObject } from './chat-object';
 export default class FactResponse {
+  jwt: Jwt
+  is: IdentityService
   jti: string
   cid: string
   status: string
@@ -20,6 +23,8 @@ export default class FactResponse {
   public static async parse(input: any, jwt: Jwt, is: IdentityService): Promise<FactResponse> {
     let r = new FactResponse()
 
+    r.jwt = jwt
+    r.is = is
     r.jti = input.jti
     r.cid = input.cid
     r.status = input.status
@@ -65,10 +70,13 @@ export default class FactResponse {
     return att
   }
 
-  attestationObjectsFor(name: string): string[] {
+  async attestationObjectsFor(name: string): Promise<FileObject[]> {
     let objs = []
     for (const at of this.attestationsFor(name)) {
-      objs.push(at.objects)
+      let fo = new FileObject(this.jwt.authToken(), this.is.url)
+      for (let i=0; i<at.objects.length; i++) {
+        objs.push(await fo.buildFromObject(at.objects[i]))
+      }
     }
     return objs
   }

@@ -110,6 +110,14 @@ export class FileObject {
     }
   }
 
+  public async save(file_name: string) {
+    const fs = require('fs').promises;
+    console.log("....")
+    console.log(this.content)
+    console.log("....")
+    await fs.writeFile('/tmp/qr.png', this.content);
+  }
+
   private encryptObject(ciphertext: string) {
     let key = this._sodium.crypto_aead_xchacha20poly1305_ietf_keygen();
     let pNonce = this._sodium.randombytes_buf(this._sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);

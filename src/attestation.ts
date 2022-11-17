@@ -46,12 +46,15 @@ export default class Attestation {
       } else {
         for (var i = 0; i < payload['facts'].length; i++) {
           if (payload['facts'][i]['key'] == name) {
+
             a.value = payload['facts'][i]['value']
+            a.objects = payload['facts'][i]['objects']
           }
         }
       }
     } else {
       a.value = payload[name]
+      a.objects = []
     }
 
     const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
