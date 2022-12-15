@@ -283,12 +283,12 @@ describe('FactsService', () => {
 
   describe('FactsService::generateDeepLink', () => {
     it('happy path', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.test.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
@@ -303,7 +303,7 @@ describe('FactsService', () => {
     })
 
     it('happy path with custom options', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }], {
         cid: 'cid',
         selfid: 'selfid'
@@ -311,7 +311,7 @@ describe('FactsService', () => {
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.test.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
@@ -327,13 +327,13 @@ describe('FactsService', () => {
     })
 
     it('happy path for development', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       r.env = 'development'
       let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
@@ -348,13 +348,13 @@ describe('FactsService', () => {
     })
 
     it('happy path for production', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       r.env = ''
       let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()

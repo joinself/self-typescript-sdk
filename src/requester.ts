@@ -268,7 +268,7 @@ export default class Requester {
 
   /**
    * Generates a deep link url so you can request facts with a simple link.
-   * @param callback the url you want your users to be sent back after authentication.
+   * @param callback the redirection identifier you'll be redirected to if the app is not installed.
    * @param facts an array with the facts you're requesting.
    * @param opts optional parameters like selfid or conversation id
    */
@@ -281,13 +281,19 @@ export default class Requester {
     let selfid = options.selfid ? options.selfid : '-'
     let body = this.jwt.toSignedJson(this.buildRequest(selfid, facts, options))
     let encodedBody = this.jwt.encode(body)
+    let baseURL = `https://${this.env}.links.joinself.com`
+    let portalURL = `https://developer.${this.env}.joinself.com`
+    let apn = `com.joinself.app.${this.env}`
 
-    if (this.env === '') {
-      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app`
-    } else if (this.env === 'development') {
-      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.dev`
+    if (this.env === '' || this.env === 'development') {
+      baseURL = "https://links.joinself.com"
+      portalURL = "https://developer.joinself.com"
+      apn = "com.joinself.app"
+      if (this.env === 'development') {
+        apn = "com.joinself.app.dev"
+      }
     }
-    return `https://${this.env}.links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.${this.env}`
+    return `${baseURL}?link=${portalURL}/callback/${callback}%3Fqr=${encodedBody}&apn=${apn}`
   }
 
   /**
