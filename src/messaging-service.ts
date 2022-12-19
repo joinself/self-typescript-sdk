@@ -372,4 +372,20 @@ export default class MessagingService {
 
     return builder.asUint8Array()
   }
+
+  buildDynamicLink(encodedBody: string, env: string, callback: string): string{
+    let baseURL = `https://${env}.links.joinself.com`
+    let portalURL = `https://developer.${env}.joinself.com`
+    let apn = `com.joinself.app.${env}`
+
+    if (env === '' || env === 'development') {
+      baseURL = "https://links.joinself.com"
+      portalURL = "https://developer.joinself.com"
+      apn = "com.joinself.app"
+      if (env === 'development') {
+        apn = "com.joinself.app.dev"
+      }
+    }
+    return `${baseURL}?link=${portalURL}/callback/${callback}%3Fqr=${encodedBody}&apn=${apn}`
+  }
 }

@@ -281,19 +281,7 @@ export default class Requester {
     let selfid = options.selfid ? options.selfid : '-'
     let body = this.jwt.toSignedJson(this.buildRequest(selfid, facts, options))
     let encodedBody = this.jwt.encode(body)
-    let baseURL = `https://${this.env}.links.joinself.com`
-    let portalURL = `https://developer.${this.env}.joinself.com`
-    let apn = `com.joinself.app.${this.env}`
-
-    if (this.env === '' || this.env === 'development') {
-      baseURL = "https://links.joinself.com"
-      portalURL = "https://developer.joinself.com"
-      apn = "com.joinself.app"
-      if (this.env === 'development') {
-        apn = "com.joinself.app.dev"
-      }
-    }
-    return `${baseURL}?link=${portalURL}/callback/${callback}%3Fqr=${encodedBody}&apn=${apn}`
+    return this.messagingService.buildDynamicLink(encodedBody, this.env, callback)
   }
 
   /**
