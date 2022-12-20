@@ -257,12 +257,12 @@ describe('AuthenticationService', () => {
 
   describe('AuthenticationService::generateDeepLink', () => {
     it('happy path', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       let link = auth.generateDeepLink(callback)
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.test.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
@@ -276,12 +276,12 @@ describe('AuthenticationService', () => {
     })
 
     it('happy path with custom options', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       let link = auth.generateDeepLink(callback, { selfid: 'selfid', cid: 'cid' })
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.test.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
@@ -296,13 +296,13 @@ describe('AuthenticationService', () => {
     })
 
     it('happy path for development', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       r.env = 'development'
       let link = auth.generateDeepLink(callback, { selfid: 'selfid', cid: 'cid' })
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()
@@ -317,13 +317,13 @@ describe('AuthenticationService', () => {
     })
 
     it('happy path for production', async () => {
-      let callback = 'http://callback.com'
+      let callback = '0x000x'
       r.env = ''
       let link = auth.generateDeepLink(callback, { selfid: 'selfid', cid: 'cid' })
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
-      expect(callbackURL.host).toEqual('callback.com')
+      expect(callbackURL.host).toEqual('developer.joinself.com')
 
       let ciphertext = JSON.parse(
         Buffer.from(callbackURL.searchParams.get('qr'), 'base64').toString()

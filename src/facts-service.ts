@@ -82,7 +82,7 @@ export default class FactsService {
 
   /**
    * Generates a deep link url so you can request facts with a simple link.
-   * @param callback the url you want your users to be sent back after authentication.
+   * @param callback the redirection identifier you'll be redirected to if the app is not installed.
    * @param facts an array with the facts you're requesting.
    * @param opts optional parameters like selfid or conversation id
    */

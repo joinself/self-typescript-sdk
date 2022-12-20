@@ -253,13 +253,7 @@ export default class ChatService {
   generateConnectionDeepLink(callback: string, opts?: { exp?: number }): string {
     let body = this.buildConnectionRequest(opts)
     let encodedBody = this.is.jwt.encode(body)
-
-    if (this.env === '') {
-      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app`
-    } else if (this.env === 'development') {
-      return `https://links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.dev`
-    }
-    return `https://${this.env}.links.joinself.com/?link=${callback}%3Fqr=${encodedBody}&apn=com.joinself.app.${this.env}`
+    return this.ms.buildDynamicLink(encodedBody, this.env, callback)
   }
 
   private buildConnectionRequest(opts?: { exp?: number }): string {

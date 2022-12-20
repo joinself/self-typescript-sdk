@@ -64,7 +64,7 @@ export default class AuthenticationService {
 
   /**
    * Generates a deep link url so you can authenticate your users with a simple link.
-   * @param callback the url you want your users to be sent back after authentication.
+   * @param callback the redirection identifier you'll be redirected to if the app is not installed.
    * @param opts optional parameters like selfid or conversation id
    */
   generateDeepLink(callback: string, opts?: { selfid?: string; cid?: string }): string {
