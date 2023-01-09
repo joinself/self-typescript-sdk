@@ -1,7 +1,7 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
 import Jwt from './jwt'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID as uuidv4 } from 'crypto'
 
 import IdentityService from './identity-service'
 import Messaging from './messaging'
