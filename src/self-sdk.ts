@@ -30,6 +30,7 @@ export default class SelfSDK {
   jwt: any
   ms: any
   logger: Logger
+  started: boolean
 
   private requester: Requester
   private authenticationService: any
@@ -63,6 +64,7 @@ export default class SelfSDK {
 
     this.baseURL = this.calculateBaseURL(opts)
     this.messagingURL = this.calculateMessagingURL(opts)
+    this.started = false
     // this.autoReconnect = opts?.autoReconnect ? opts?.autoReconnect : true;
   }
 
@@ -140,7 +142,7 @@ export default class SelfSDK {
         storageDir: storageFolder
       })
     } else {
-      sdk.ms = await Messaging.build(
+      sdk.ms = Messaging.build(
         sdk.messagingURL,
         sdk.jwt,
         sdk.identityService,
@@ -178,8 +180,24 @@ export default class SelfSDK {
     sdk.voiceService = new VoiceService(
       sdk.messagingService
     )
+    sdk.started = false
 
     return sdk
+  }
+
+  /**
+   * Starts the websockets connection and processes incoming messages in case the client
+   * is initialized with auto_start set to false.
+   */
+  async start() {
+    if (this.started == true) {
+      return this
+    }
+
+    await this.ms.start()
+    this.started = true
+
+    return this
   }
 
   /**

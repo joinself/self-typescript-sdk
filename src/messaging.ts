@@ -43,6 +43,7 @@ export default class Messaging {
   storageDir: string
   encryptionClient: Crypto
   logger: Logger
+  started: boolean
 
   constructor(
     url: string,
@@ -66,24 +67,23 @@ export default class Messaging {
     }
     this.offsetPath = `${this.offsetPath}/${this.jwt.appID}:${this.jwt.deviceID}.offset`
     this.logger = logging.getLogger('core.self-sdk')
-
-    if (this.url !== '') {
-      this.connect()
-    }
   }
 
-  public static async build(
+  public static build(
     url: string,
     jwt: Jwt,
     is: IdentityService,
     ec: Crypto,
     opts?: { storageDir?: string }
-  ): Promise<Messaging> {
+  ): Messaging {
     let ms = new Messaging(url, jwt, is, ec, opts)
 
-    await ms.setup()
-
     return ms
+  }
+
+  public async start() {
+    this.connect()
+    await this.setup()
   }
 
   private async setup() {
