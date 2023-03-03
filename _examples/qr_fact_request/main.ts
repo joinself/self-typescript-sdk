@@ -11,6 +11,7 @@ async function qrFactRequest(appID: string, appSecret: string, selfID: string) {
     }
     let storageFolder = __dirname.split("/").slice(0,-1).join("/") + "/.self_storage"
     const sdk = await SelfSDK.build( appID, appSecret, "random", storageFolder, opts);
+    await sdk.start()
 
     sdk.facts().subscribe((res: any): any => {
         sdk.logger.info(res.attestationValuesFor('phone_number')[0])

@@ -17,6 +17,7 @@ async function request(appID: string, appSecret: string, selfID: string) {
     }
     let storageFolder = __dirname.split("/").slice(0,-1).join("/") + "/.self_storage"
     const sdk = await SelfSDK.build( appID, appSecret, "random", storageFolder, opts);
+    await sdk.start()
 
     let source = "supu"
     let fact = new FactToIssue("foo", "bar", source, {
