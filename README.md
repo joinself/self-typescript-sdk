@@ -57,7 +57,7 @@ import authentication from 'self-sdk/authentication'
 
 ## Requirements
 
-In order to use this gem you'll need to get your `app_id` and `app_api_key` from [self developer portal](https://developer.self.net).
+In order to use this gem you'll need to get your `app_id` and `app_api_key` from [self developer portal](https://developer.joinself.com).
 
 
 ## Documentation
