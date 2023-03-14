@@ -7,7 +7,7 @@ import { ChatMessage } from './chat-message';
 import { FileObject } from './chat-object';
 import { ChatGroup } from './chat-group';
 import { ErrorCorrectLevel, QRCode } from 'qrcode-generator-ts';
-import { randomUUID as uuidv4, Hash } from 'crypto';
+import { randomUUID as uuidv4 } from 'crypto';
 
 export default class ChatService {
   is: IdentityService
