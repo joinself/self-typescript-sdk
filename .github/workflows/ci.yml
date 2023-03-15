@@ -1,33 +1,28 @@
 name: CI
 
-on: [push, workflow_dispatch]
+on: 
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
-
+    runs-on: ubuntu-latest
     container:
-      image: ubuntu:20.04
+      image: ubuntu:22.04
       env:
         DEBIAN_FRONTEND: noninteractive
-
     steps:
-      - uses: actions/checkout@v2
-
+      - uses: actions/checkout@v3
       - name: Setup environment
         run: |
           apt-get update
           apt-get -y install curl libsodium-dev npm
-          curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o /tmp/libself-olm_0.1.17_amd64.deb
-          curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o /tmp/libself-omemo_0.1.3_amd64.deb
-          apt-get -y install /tmp/libself-olm_0.1.17_amd64.deb
-          apt-get -y install /tmp/libself-omemo_0.1.3_amd64.deb
-
       - name: Install dependencies
         run: npm install
- 
       - name: Build package
         run: npm run build
-
       - name: Test package
         run: npm run test
