@@ -1,6 +1,6 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID as uuidv4 } from 'crypto'
 import { NTPClient } from 'ntpclient'
 import { logging, Logger } from './logging'
 import { IOManager } from './storage'
