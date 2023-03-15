@@ -14,7 +14,7 @@ import FactResponse from './fact-response'
 
 import * as fs from 'fs'
 import { openStdin } from 'process'
-import { randomUUID as uuidv4 } from 'crypto'
+import { v4 as uuidv4 } from 'uuid'
 import * as flatbuffers from 'flatbuffers'
 import { Identity, App } from './identity-service'
 import { logging, Logger } from './logging'
