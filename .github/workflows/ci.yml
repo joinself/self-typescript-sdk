@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:22.04
+      image: ubuntu:20.04
       env:
         DEBIAN_FRONTEND: noninteractive
     steps:
@@ -20,7 +20,7 @@ jobs:
         run: |
           apt-get update
           apt-get -y install curl gpg libsodium-dev lsb-release
-          VERSION=node_19.x
+          VERSION=node_12.x
           KEYRING=/usr/share/keyrings/nodesource.gpg
           curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
           gpg --no-default-keyring --keyring "$KEYRING" --list-keys
