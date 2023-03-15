@@ -18,6 +18,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup environment
         run: |
+          apt-get update
+          apt-get -y install curl gpg libsodium-dev
           VERSION=node_19.x
           KEYRING=/usr/share/keyrings/nodesource.gpg
           curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | sudo tee "$KEYRING" >/dev/null
@@ -27,7 +29,7 @@ jobs:
           echo "deb [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | sudo tee /etc/apt/sources.list.d/nodesource.list
           echo "deb-src [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | sudo tee -a /etc/apt/sources.list.d/nodesource.list
           apt-get update
-          apt-get -y install curl libsodium-dev nodejs
+          apt-get -y install nodejs
       - name: Install dependencies
         run: npm install
       - name: Build package
