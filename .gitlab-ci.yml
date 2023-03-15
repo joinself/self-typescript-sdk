@@ -10,12 +10,17 @@ stages:
 .setup-environment: &setup-environment |
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get -y install curl libsodium-dev npm
-  tmpdir=$(mktemp -d)
-  curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o ${tmpdir}/libself-olm_0.1.17_amd64.deb
-  curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o ${tmpdir}/libself-omemo_0.1.3_amd64.deb
-  apt-get -y install ${tmpdir}/libself-olm_0.1.17_amd64.deb
-  apt-get -y install ${tmpdir}/libself-omemo_0.1.3_amd64.deb
+  apt-get -y install curl gpg libsodium-dev lsb-release
+  VERSION=node_12.x
+  KEYRING=/usr/share/keyrings/nodesource.gpg
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
+  gpg --no-default-keyring --keyring "$KEYRING" --list-keys
+  chmod a+r /usr/share/keyrings/nodesource.gpg
+  DISTRO="$(lsb_release -s -c)"
+  echo "deb [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee /etc/apt/sources.list.d/nodesource.list
+  echo "deb-src [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee -a /etc/apt/sources.list.d/nodesource.list
+  apt-get update
+  apt-get -y install nodejs
 
 .build: &build |
   npm install
