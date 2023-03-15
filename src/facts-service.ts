@@ -1,6 +1,6 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-import { randomUUID as uuidv4 } from 'crypto'
+import { v4 as uuidv4 } from 'uuid'
 
 import Fact from './fact'
 import FactResponse from './fact-response'
