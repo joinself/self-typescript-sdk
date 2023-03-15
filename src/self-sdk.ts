@@ -8,7 +8,7 @@ import IdentityService from './identity-service'
 import MessagingService from './messaging-service'
 import Jwt from './jwt'
 import Messaging from './messaging'
-import Crypto from './crypto'
+import Crypto from './self-crypto'
 import { logging, LogEntry, Logger } from './logging'
 import ChatService from './chat-service';
 import DocsService from './docs-service';

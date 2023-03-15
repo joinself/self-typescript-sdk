@@ -1,7 +1,7 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
 import IdentityService from '../../src/identity-service'
-import { Recipient } from '../../src/crypto';
+import { Recipient } from '../../src/self-crypto';
 import { logging, Logger } from '../../src/logging'
 
 export default class EncryptionMock {

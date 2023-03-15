@@ -18,7 +18,7 @@ import * as message from './msgproto/message_generated'
 import * as mtype from './msgproto/types_generated'
 import FactResponse from './fact-response'
 import MessagingService from './messaging-service'
-import Crypto from './crypto'
+import Crypto from './self-crypto'
 import { logging, Logger } from './logging'
 
 import * as flatbuffers from 'flatbuffers'

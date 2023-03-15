@@ -10,9 +10,9 @@ import * as acl from './msgproto/acl_generated'
 import * as message from './msgproto/message_generated'
 import * as mtype from './msgproto/types_generated'
 
-import Crypto from './crypto'
+import Crypto from './self-crypto'
 import { logging, Logger } from './logging'
-import { Recipient } from './crypto'
+import { Recipient } from './self-crypto'
 
 import * as flatbuffers from 'flatbuffers'
 

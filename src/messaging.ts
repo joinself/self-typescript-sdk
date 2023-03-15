@@ -9,7 +9,7 @@ import * as header from './msgproto/header_generated'
 import * as message from './msgproto/message_generated'
 import * as notification from './msgproto/notification_generated'
 import * as mtype from './msgproto/types_generated'
-import Crypto from './crypto'
+import Crypto from './self-crypto'
 import FactResponse from './fact-response'
 
 import * as fs from 'fs'

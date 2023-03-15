@@ -2,7 +2,7 @@
 
 import Jwt from '../src/jwt'
 import IdentityService from '../src/identity-service'
-import Crypto from '../src/crypto'
+import Crypto from '../src/self-crypto'
 
 var fs = require('fs')
 var deleteFolderRecursive = function(path) {

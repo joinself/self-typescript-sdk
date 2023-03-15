@@ -10,7 +10,7 @@ import * as header from '../src/msgproto/header_generated'
 import * as message from '../src/msgproto/message_generated'
 import * as notification from '../src/msgproto/notification_generated'
 import * as mtype from '../src/msgproto/types_generated'
-import Crypto from '../src/crypto'
+import Crypto from '../src/self-crypto'
 import EncryptionMock from './mocks/encryption-mock'
 
 import * as flatbuffers from 'flatbuffers'
