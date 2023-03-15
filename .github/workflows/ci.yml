@@ -22,12 +22,12 @@ jobs:
           apt-get -y install curl gpg libsodium-dev
           VERSION=node_19.x
           KEYRING=/usr/share/keyrings/nodesource.gpg
-          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | sudo tee "$KEYRING" >/dev/null
+          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
           gpg --no-default-keyring --keyring "$KEYRING" --list-keys
           chmod a+r /usr/share/keyrings/nodesource.gpg
           DISTRO="$(lsb_release -s -c)"
-          echo "deb [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-          echo "deb-src [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | sudo tee -a /etc/apt/sources.list.d/nodesource.list
+          echo "deb [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee /etc/apt/sources.list.d/nodesource.list
+          echo "deb-src [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee -a /etc/apt/sources.list.d/nodesource.list
           apt-get update
           apt-get -y install nodejs
       - name: Install dependencies
