@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events'
+const EventEmitter = require('events');
 
 export class LogManager extends EventEmitter {
   private options: LogOptions = {
@@ -81,7 +81,7 @@ export interface LogOptions {
 export const logging = new LogManager()
 
 export class Logger {
-  private logManager: EventEmitter
+  private logManager: LogManager
   private minLevel: number
   private module: string
   private readonly levels: { [key: string]: number } = {
@@ -92,7 +92,7 @@ export class Logger {
     error: 5
   }
 
-  constructor(logManager: EventEmitter, module: string, minLevel: string) {
+  constructor(logManager: LogManager, module: string, minLevel: string) {
     this.logManager = logManager
     this.module = module
     this.minLevel = this.levelToInt(minLevel)
