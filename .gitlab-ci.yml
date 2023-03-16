@@ -90,7 +90,7 @@ secrets-check:
 
 build:
   stage: build
-  image: ubuntu:focal-20210217
+  image: ubuntu:jammy-20230308
   script:
     - *setup-environment
     - *build
@@ -109,7 +109,7 @@ release:
 
 npm:
   stage: publish
-  image: ubuntu:focal-20210217
+  image: ubuntu:jammy-20230308
   script:
     - *setup-environment
     - ${SCRIPTS_DIR}/npm-setup
