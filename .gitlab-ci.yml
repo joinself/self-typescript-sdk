@@ -11,7 +11,7 @@ stages:
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
   apt-get -y install curl gpg libsodium-dev lsb-release
-  VERSION=node_12.x
+  VERSION=node_18.x
   KEYRING=/usr/share/keyrings/nodesource.gpg
   curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
   gpg --no-default-keyring --keyring "$KEYRING" --list-keys
@@ -90,7 +90,7 @@ secrets-check:
 
 build:
   stage: build
-  image: ubuntu:focal-20210217
+  image: ubuntu:jammy-20230308
   script:
     - *setup-environment
     - *build
@@ -109,7 +109,7 @@ release:
 
 npm:
   stage: publish
-  image: ubuntu:focal-20210217
+  image: ubuntu:jammy-20230308
   script:
     - *setup-environment
     - ${SCRIPTS_DIR}/npm-setup
