@@ -34,5 +34,11 @@ jobs:
         run: npm install
       - name: Build package
         run: npm run build
+      - name: Test include package
+        run: |
+          npm install typescript -g
+          ( cd test/instance && npm i )
+          tsc test/instance/test.ts
+          node test/instance/test.js
       - name: Test package
         run: npm run test
