@@ -1,6 +1,6 @@
 {
   "name": "self-sdk",
-  "type": "module",
+  "type": "mod",
   "version": "0.0.66",
   "description": "",
   "keywords": [],
@@ -127,6 +127,7 @@
   },
   "dependencies": {
     "@types/libsodium-wrappers": "^0.7.9",
+    "@types/uuid": "^8.3.0",
     "axios": ">=0.24.0",
     "eslint": "^7.3.2",
     "flatbuffers": "^2.0.3",
@@ -142,6 +143,7 @@
     "string-width": "^5.0.1",
     "text-encoding": "^0.7.0",
     "ts-protoc-gen": "^0.15.0",
+    "uuid": "^8.3.2",
     "webpack-dev-server": "^4.5.0",
     "websocket": "^1.0.33",
     "ws": "^8.3.0"
