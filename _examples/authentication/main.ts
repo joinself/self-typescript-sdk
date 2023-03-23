@@ -1,6 +1,6 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
-import SelfSDK from '../../src/self-sdk'
+const SelfSDK = require("self-sdk");
 import { exit } from 'process';
 
 async function authenticate(appID: string, appSecret: string, selfID: string) {
