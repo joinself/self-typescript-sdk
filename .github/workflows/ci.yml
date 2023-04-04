@@ -7,17 +7,36 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  test:
+  license-compliance:
+    uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
+    with:
+      container-image: joinself/license-finder:node
+      continue-on-error: true
+    secrets: inherit
+  secret-scan:
+    uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
+    with:
+      continue-on-error: true
+    secrets: inherit
+
+  build:
+    needs: [license-compliance, secret-scan]
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:22.04
-      env:
-        DEBIAN_FRONTEND: noninteractive
+      image: ubuntu:jammy-20230308
     steps:
-      - uses: actions/checkout@v3
+      - name: Setup job
+        uses: joinself/github-actions-public/setup-job@main
       - name: Setup environment
         run: |
+          . ${GITHUB_WORKSPACE}/.ci/env
+
+          export DEBIAN_FRONTEND=noninteractive
           apt-get update
           apt-get -y install curl gpg libsodium-dev lsb-release
           VERSION=node_18.x
@@ -30,9 +49,21 @@ jobs:
           echo "deb-src [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee -a /etc/apt/sources.list.d/nodesource.list
           apt-get update
           apt-get -y install nodejs
-      - name: Install dependencies
-        run: npm install
-      - name: Build package
-        run: npm run build
-      - name: Test package
-        run: npm run test
+
+      - name: Build
+        run: |
+          npm install
+          npm run test
+          npm run build
+          tar -czf artefacts.tar.gz dist docs node_modules
+
+      - name: Failure notification
+        if: ${{ github.ref == 'refs/heads/main-disabled' && failure() }}
+        uses: joinself/github-actions-public/failure-notification@main
+        with:
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
+  publish:
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    needs: build
+    uses: joinself/github-workflows-public/.github/workflows/publish-npm.yml@main
+    secrets: inherit
