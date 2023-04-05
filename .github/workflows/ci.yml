@@ -58,3 +58,4 @@ jobs:
     needs: build
     uses: joinself/github-workflows-public/.github/workflows/publish-npm.yml@main
     secrets: inherit
+
