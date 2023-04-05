@@ -40,7 +40,14 @@ jobs:
           npm install
           npm run test
           npm run build
-          tar -czf artefacts.tar.gz dist docs node_modules
+          tar -czf artifacts.tar.gz dist
+          #tar -czf artefacts.tar.gz dist docs node_modules
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: artifacts.tar.gz
+        retention-days: 1
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main-disabled' && failure() }}
         uses: joinself/github-actions-public/failure-notification@main
