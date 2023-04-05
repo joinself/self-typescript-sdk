@@ -47,7 +47,7 @@ jobs:
         with:
           name: artifacts
           path: artifacts.tar.gz
-        retention-days: 1
+          retention-days: 1
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main-disabled' && failure() }}
         uses: joinself/github-actions-public/failure-notification@main
