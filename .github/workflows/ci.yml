@@ -7,38 +7,51 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  license-compliance:
+    uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
+    with:
+      container-image: joinself/license-finder:node
+      continue-on-error: true
+    secrets: inherit
+  secret-scan:
+    uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
+    with:
+      continue-on-error: true
+    secrets: inherit
+  build:
+    needs: [license-compliance, secret-scan]
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:22.04
-      env:
-        DEBIAN_FRONTEND: noninteractive
+      image: node:18.15.0-bullseye-slim
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup environment
+      - name: Setup job
+        uses: joinself/github-actions-public/setup-job@main
+      - name: Build
+        shell: bash
         run: |
-          apt-get update
-          apt-get -y install curl gpg libsodium-dev lsb-release
-          VERSION=node_18.x
-          KEYRING=/usr/share/keyrings/nodesource.gpg
-          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
-          gpg --no-default-keyring --keyring "$KEYRING" --list-keys
-          chmod a+r /usr/share/keyrings/nodesource.gpg
-          DISTRO="$(lsb_release -s -c)"
-          echo "deb [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee /etc/apt/sources.list.d/nodesource.list
-          echo "deb-src [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee -a /etc/apt/sources.list.d/nodesource.list
-          apt-get update
-          apt-get -y install nodejs
-      - name: Install dependencies
-        run: npm install
-      - name: Build package
-        run: npm run build
-      - name: Test include package
-        run: |
-          npm install typescript -g
-          ( cd test/instance && npm i )
-          tsc test/instance/test.ts
-          node test/instance/test.js
-      - name: Test package
-        run: npm run test
+          . ${GITHUB_WORKSPACE}/.ci/env
+          npm install
+          npm run test
+          npm run build
+          tar -czf artifacts.tar.gz dist
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: artifacts.tar.gz
+          retention-days: 1
+      - name: Failure notification
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        uses: joinself/github-actions-public/failure-notification@main
+        with:
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
+  publish:
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    needs: build
+    uses: joinself/github-workflows-public/.github/workflows/publish-npm.yml@main
+    secrets: inherit
