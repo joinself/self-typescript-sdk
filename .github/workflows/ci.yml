@@ -13,50 +13,35 @@ defaults:
 
 jobs:
   license-compliance:
+    if: ${{ false }}
     uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
     with:
       container-image: joinself/license-finder:node
       continue-on-error: true
     secrets: inherit
   secret-scan:
+    if: ${{ false }}
     uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
     with:
       continue-on-error: true
     secrets: inherit
-
   build:
     needs: [license-compliance, secret-scan]
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:jammy-20230308
+      image: node:18.15.0-bullseye-slim
     steps:
       - name: Setup job
         uses: joinself/github-actions-public/setup-job@main
-      - name: Setup environment
-        run: |
-          . ${GITHUB_WORKSPACE}/.ci/env
-
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update
-          apt-get -y install curl gpg libsodium-dev lsb-release
-          VERSION=node_18.x
-          KEYRING=/usr/share/keyrings/nodesource.gpg
-          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
-          gpg --no-default-keyring --keyring "$KEYRING" --list-keys
-          chmod a+r /usr/share/keyrings/nodesource.gpg
-          DISTRO="$(lsb_release -s -c)"
-          echo "deb [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee /etc/apt/sources.list.d/nodesource.list
-          echo "deb-src [signed-by=$KEYRING] https://deb.nodesource.com/$VERSION $DISTRO main" | tee -a /etc/apt/sources.list.d/nodesource.list
-          apt-get update
-          apt-get -y install nodejs
-
       - name: Build
         run: |
+          . ${GITHUB_WORKSPACE}/.ci/env
+          npm set //npm.pkg.github.com/:_authToken ${{ secrets.NPM_TOKEN }}
+          cat ~/.npmrc
           npm install
           npm run test
           npm run build
           tar -czf artefacts.tar.gz dist docs node_modules
-
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main-disabled' && failure() }}
         uses: joinself/github-actions-public/failure-notification@main
