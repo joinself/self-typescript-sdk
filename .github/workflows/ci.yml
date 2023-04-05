@@ -13,20 +13,18 @@ concurrency:
 
 jobs:
   license-compliance:
-    if: ${{ false }}
     uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
     with:
       container-image: joinself/license-finder:node
       continue-on-error: true
     secrets: inherit
   secret-scan:
-    if: ${{ false }}
     uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
     with:
       continue-on-error: true
     secrets: inherit
   build:
-    #needs: [license-compliance, secret-scan]
+    needs: [license-compliance, secret-scan]
     runs-on: ubuntu-latest
     container:
       image: node:18.15.0-bullseye-slim
@@ -41,7 +39,6 @@ jobs:
           npm run test
           npm run build
           tar -czf artifacts.tar.gz dist
-          #tar -czf artefacts.tar.gz dist docs node_modules
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -49,12 +46,12 @@ jobs:
           path: artifacts.tar.gz
           retention-days: 1
       - name: Failure notification
-        if: ${{ github.ref == 'refs/heads/main-disabled' && failure() }}
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
         uses: joinself/github-actions-public/failure-notification@main
         with:
           slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
   publish:
-    #if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
     needs: build
     uses: joinself/github-workflows-public/.github/workflows/publish-npm.yml@main
     secrets: inherit
