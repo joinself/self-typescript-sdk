@@ -26,7 +26,7 @@ jobs:
       continue-on-error: true
     secrets: inherit
   build:
-    needs: [license-compliance, secret-scan]
+    #needs: [license-compliance, secret-scan]
     runs-on: ubuntu-latest
     container:
       image: node:18.15.0-bullseye-slim
