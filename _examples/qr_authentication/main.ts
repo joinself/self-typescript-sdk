@@ -26,9 +26,15 @@ async function authenticate(appID: string, appSecret: string, selfID: string) {
     // Generate a QR code to authenticate
     let buf = sdk.authentication().generateQR()
 
+    // You can manage your redirection codes on your app management on the
+    // developer portal
+    let redirectionCode = "90d017d1"
+    let link = sdk.authentication().generateDeepLink(redirectionCode)
+
     const fs = require('fs').promises;
     await fs.writeFile('/tmp/qr.png', buf);
     sdk.logger.info("Open /tmp/qr.png and scan it with your device")
+    sdk.logger.info("OR, alternatively open the link on your mobile device " + link)
 
     // Wait til the response is received
     const wait = (seconds) =>
