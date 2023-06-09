@@ -46,7 +46,7 @@ export class FileObject {
    * @param mime mime type.
    * @returns the current FileObject
    */
-  async buildFromData(name: string, data: string, mime: string): Promise<FileObject> {
+  async buildFromData(name: string, data: string|Uint8Array, mime: string): Promise<FileObject> {
     await this._sodium.ready;
 
     // Encrypt the message
@@ -110,11 +110,11 @@ export class FileObject {
     }
   }
 
-  private encryptObject(ciphertext: string) {
+  private encryptObject(plaintext: string|Uint8Array) {
     let key = this._sodium.crypto_aead_xchacha20poly1305_ietf_keygen();
     let pNonce = this._sodium.randombytes_buf(this._sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
     let ct = this._sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
-      ciphertext,
+      plaintext,
       null,
       null,
       pNonce,

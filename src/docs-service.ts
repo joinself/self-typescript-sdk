@@ -8,7 +8,7 @@ import { FileObject } from './chat-object';
 
 interface Doc {
   name: string,
-  data: string,
+  data: string|Uint8Array,
   mime: string,
 }
 export default class DocsService {
