@@ -199,6 +199,7 @@ export default class Requester {
     // Get intermediary's device
     let intermediary = options.intermediary ? options.intermediary : 'self_intermediary'
     let devices = await this.is.devices(intermediary)
+    opts['aud'] = intermediary
 
     let j = this.buildRequest(selfid, facts, opts)
     let ciphertext = this.jwt.toSignedJson(j)
@@ -290,10 +291,11 @@ export default class Requester {
    * @param facts an array with the facts you're requesting.
    * @param opts optional parameters like conversation id or the expiration time
    */
-  private buildRequest(selfid: string, facts: Fact[], opts?: { cid?: string; exp?: number, allowedFor?: number, auth?: boolean }): any {
+  private buildRequest(selfid: string, facts: Fact[], opts?: { cid?: string; exp?: number, allowedFor?: number, auth?: boolean, aud?: string }): any {
     let options = opts ? opts : {}
     let cid = options.cid ? options.cid : uuidv4()
     let expTimeout = options.exp ? options.exp : 300000
+    let aud = options.aud ? options.aud : selfid
 
     for (var i = 0; i < facts.length; i++) {
       if (!Fact.isValid(facts[i])) {
@@ -310,7 +312,7 @@ export default class Requester {
       typ: 'identities.facts.query.req',
       iss: this.jwt.appID,
       sub: selfid,
-      aud: selfid,
+      aud: aud,
       iat: iat.toISOString(),
       exp: exp.toISOString(),
       cid: cid,

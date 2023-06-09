@@ -222,7 +222,7 @@ describe('FactsService', () => {
           expect(payload.typ).toEqual('identities.facts.query.req')
           expect(payload.iss).toEqual('appID')
           expect(payload.sub).toEqual('selfid')
-          expect(payload.aud).toEqual('selfid')
+          expect(payload.aud).toEqual('self_intermediary')
           expect(payload.cid).toEqual(cid)
           expect(payload.jti.length).toEqual(36)
           expect(payload.facts).toEqual([{ fact: 'phone_number' }])
