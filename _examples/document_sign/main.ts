@@ -6,6 +6,7 @@ import { ChatMessage } from '../../src/chat-message';
 import { readFileSync, writeFileSync } from 'fs';
 import { ChatGroup } from '../../src/chat-group';
 
+
 let groups = {}
 
 // Wait til the response is received
@@ -36,32 +37,34 @@ async function main() {
     // tsc main.ts && SELF_APP_ID="109a21fdd1bfaffa2717be1b4edb57e9" SELF_APP_SECRET="RmfQdahde0n5SSk1iF4qA2xFbm116RNjjZe47Swn1s4" SELF_USER_ID="35918759412" node main.js
     const sdk = await setupSDK(appID, appSecret)
     let terms = "please, read and accept terms and conditions"
-    let docs = []
-    let content = readFileSync("./sample.pdf").toString('utf8')
 
-    docs.push({
+    var myArrayBuffer = readFileSync("./sample.pdf", null).buffer;
+    var content = new Uint8Array(myArrayBuffer);
+
+    let docs = [{
       name: "Terms and conditions",
       data: content,
       mime: "application/pdf"
-    })
+    }]
 
     let resp = await sdk.docs().requestSignature(selfID, terms, docs)
     if (resp["status"] == "accepted") {
       console.log("Document signed!")
       console.log("")
-      console.log("signned documents: ")
 
       for (var i=0; i < resp["signed_objects"].length; i++) {
-        console.log(`- Name : ${resp["signed_objects"]["name"]}`)
-        console.log(`  Link : ${resp["signed_objects"]["link"]}`)
-        console.log(`  Hash : ${resp["signed_objects"]["hash"]}`)
+        console.log(`- Name : ${resp["signed_objects"][0]["name"]}`)
+        console.log(`  Link : ${resp["signed_objects"][0]["link"]}`)
+        console.log(`  Hash : ${resp["signed_objects"][0]["hash"]}`)
       }
       console.log("")
       console.log("full signature")
       console.log(resp["input"])
+      exit(0);
     }
 
 }
+
 
 main();
 
