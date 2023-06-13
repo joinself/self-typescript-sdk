@@ -8,63 +8,6 @@ This SDK provides a toolset to interact with the Self network from your TypeScri
 
 ## Installation
 
-### Dependencies
-
-- [Self OLM](https://github.com/joinself/self-olm)
-- [Self OMEMO](https://github.com/joinself/self-omemo)
-
-##### Debian/Ubuntu
-```bash
-apt install -y libsodium-dev
-curl -O https://download.joinself.com/olm/libself-olm_0.1.39_amd64.deb
-curl -O https://download.joinself.com/omemo/libself-omemo_0.1.23_amd64.deb
-apt install -y ./libself-olm_0.1.39_amd64.deb ./libself-omemo_0.1.23_amd64.deb
-```
-
-##### CentOS/RedHat
-```bash
-yum install -y libsodium
-rpm -Uvh https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
-rpm -Uvh https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
-```
-
-##### Fedora
-```bash
-dnf install -y libsodium
-dnf install -y https://download.joinself.com/olm/libself-olm-0.1.39-1.x86_64.rpm
-dnf install -y https://download.joinself.com/omemo/libself-omemo-0.1.23-1.x86_64.rpm
-```
-
-##### MacOS - AMD64
-```bash
-brew tap joinself/crypto
-brew install libself-olm libself-omemo
-```
-
-##### MacOS - ARM64
-Brew on M1 macs currently lacks environment variables needed for the SDK to find the `olm` and `omemo` libraries, so you will need to add some additional configuration to your system:
-
-In your `~/.zshrc`, add:
-```bash
-export C_INCLUDE_PATH=/opt/homebrew/include/
-export LIBRARY_PATH=$LIBRARY_PATH:/opt/homebrew/lib
-```
-
-You should then be able to run:
-
-```bash
-source ~/.zshrc
-brew tap joinself/crypto
-brew install --build-from-source libself-olm libself-omemo
-```
-
-Note, you may also need to create `/usr/local/lib` if it does not exist:
-```bash
-sudo mkdir /usr/local/lib
-```
-
-### Install
-
 ```bash
 $ npm install self-sdk
 ```
@@ -112,7 +55,7 @@ import authentication from "self-sdk/authentication"
 
 #### Identity
 
-The identity service provides functionality for looking up identitiesm devices and public keys.
+The identity service provides functionality for looking up identities, devices and public keys.
 
 Get an identity:
 
