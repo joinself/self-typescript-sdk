@@ -1,7 +1,6 @@
 # Self TypeScript SDK
 
 [![CI](https://github.com/joinself/self-typescript-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/joinself/self-typescript-sdk/actions/workflows/ci.yml)
-[![Gem Version](https://badge.fury.io/rb/selfid.svg)](https://badge.fury.io/rb/selfid)
 
 The official Self SDK for TypeScript.
 
