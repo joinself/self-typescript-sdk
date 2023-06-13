@@ -5,7 +5,7 @@
 
 The official Self SDK for TypeScript.
 
-This SDK provides a toolset to interact with the Self network from your JavaScript code.
+This SDK provides a toolset to interact with the Self network from your TypeScript code.
 
 ## Installation
 
@@ -88,15 +88,55 @@ Register your application using one of the links above ([further information](ht
 #### Client Setup
 
 ```typescript
-const SelfSDK = require("self-sdk");
+async function main() {
+  const selfsdk = require("self-sdk");
 
-const sdk = await SelfSDK.build(<application-id>, <application-secret-key>, "random-secret", "/data", { env: "sandbox" });
+  const client = await selfsdk.build(
+    "<application-id>",
+    "<application-secret-key>",
+    "random-secret-string",
+    "/data",
+    { env: "sandbox" },  // optional (defaults to production)
+  );
+
+  await client.start()
+}
+
+main();
 ```
 
 Additionally, you can import the transpiled modules from `dist/lib` in case you have a modular library:
 
-```javascript
-import authentication from 'self-sdk/authentication'
+```typescript
+import authentication from "self-sdk/authentication"
+```
+
+#### Identity
+
+The identity service provides functionality for looking up identitiesm devices and public keys.
+
+Get an identity:
+
+```typescript
+let identity = await client.identity().get("<self-id>")
+```
+
+#### Facts
+
+The fact service can be used to ask for specific attested facts from an identity.
+
+Request a fact:
+
+```typescript
+let phoneNumber = await client.facts().request("<self-id>", [{ fact: "phone_number" }])
+```
+
+#### Authentication
+
+The authentication service can be used to send an authentication challenge to a users device. The response the user sends will be signed by their identity and can be validated.
+
+```typescript
+let resp = await client.authentication().request("<self-id>")
 ```
 
 ## Documentation
