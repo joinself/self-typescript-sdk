@@ -1,0 +1,63 @@
+name: _publish
+
+on:
+  workflow_call:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container:
+      image: node:18.15.0-bullseye-slim
+    steps:
+      - name: Setup environment
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y curl git python3
+          curl -Lo /tmp/gh.deb https://github.com/cli/cli/releases/download/v2.23.0/gh_2.23.0_linux_amd64.deb
+          apt-get install -y /tmp/gh.deb
+          curl -Lo /usr/local/bin/slack-release-notification https://static.joinself.com/scripts/slack-release-notification
+          chmod +x /usr/local/bin/slack-release-notification
+      - name: Setup job
+        uses: joinself/github-actions-public/setup-job@main
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: artifacts
+      - name: Publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          SLACK_WEBHOOK_CI_CI: ${{ secrets.SLACK_WEBHOOK_CI_CI }}
+        run: |
+          . ${GITHUB_WORKSPACE}/.ci/env
+          chown root:root .
+          git config --global user.name ci
+          git config --global user.email ops@joinself.com
+          version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
+          branch=$(git branch --show-current)
+          current_git_tag=$(git tag --merged ${branch} | sort -V | tail -n 1)
+          if [[ "${version}" != "${current_git_tag}" ]]; then
+            git tag -a ${version} -m "${version}"
+            git push origin ${version}
+            subject=$(git log -n 1 --format=%s)
+            body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
+            if [[ -z ${body} ]]; then
+              release_notes="- ${subject}"
+            else
+              release_notes="${body}"
+            fi
+            gh release create "${version}" --notes "${release_notes}"
+            tar -zxf artifacts.tar.gz
+            npm config set '//registry.npmjs.org/:_authToken=${NPM_TOKEN}'
+            npm publish --access public
+            slack-release-notification -v ${version}
+          else
+            echo "Version hasn't changed. Nothing to do here."
+          fi
+      - name: Failure notification
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        uses: joinself/github-actions-public/failure-notification@main
+        with:
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
