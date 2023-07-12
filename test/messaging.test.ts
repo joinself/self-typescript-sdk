@@ -4,12 +4,10 @@ import Jwt from '../src/jwt'
 import IdentityService from '../src/identity-service'
 import Messaging from '../src/messaging'
 import { WebSocket, Server } from 'mock-socket'
-import * as acl from '../src/msgproto/acl_generated'
-import * as auth from '../src/msgproto/auth_generated'
-import * as header from '../src/msgproto/header_generated'
-import * as message from '../src/msgproto/message_generated'
-import * as notification from '../src/msgproto/notification_generated'
-import * as mtype from '../src/msgproto/types_generated'
+import * as auth from '../src/msgproto/auth'
+import * as header from '../src/msgproto/header'
+import * as message from '../src/msgproto/message'
+import * as mtype from '../src/msgproto/msg-type'
 import Crypto from '../src/crypto'
 import EncryptionMock from './mocks/encryption-mock'
 
@@ -177,28 +175,6 @@ describe('messaging', () => {
     })
   })
 
-  describe('processIncommingACL', () => {
-    it('ACL not found', () => {
-      let input = `[{"acl_source":"*","acl_exp":"2120-07-05T08:13:25.367860183Z"},{"acl_source":"84099724068","acl_exp":"3018-12-07T07:25:47.616Z"}]`
-      ms['processIncommingACL']('cid', input)
-
-      let r = ms.requests.get('cid')
-      expect(r).toBeUndefined()
-    })
-
-    it('happy path', () => {
-      ms.requests.set('cid', { data: '' })
-
-      let input = `[{"acl_source":"*","acl_exp":"2120-07-05T08:13:25.367860183Z"},{"acl_source":"84099724068","acl_exp":"3018-12-07T07:25:47.616Z"}]`
-      ms['processIncommingACL']('cid', input)
-
-      let r = ms.requests.get('cid')
-      expect(r.response).toBeTruthy()
-      expect(r.acknowledged).toBeTruthy()
-      expect(r.response.length).toEqual(2)
-    })
-  })
-
   describe('setup', () => {
     it('happy path', async () => {
       const fakeURL = 'ws://localhost:8080'
@@ -207,9 +183,9 @@ describe('messaging', () => {
       mockServer.on('connection', socket => {
         socket.on('message', async input => {
           let buf = new flatbuffers.ByteBuffer(input.valueOf() as Uint8Array)
-          let msg = auth.SelfMessaging.Auth.getRootAsAuth(buf)
+          let msg = auth.Auth.getRootAsAuth(buf)
 
-          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.AUTH)
+          expect(msg.msgtype()).toEqual(mtype.MsgType.AUTH)
 
           // Stop listening for response
           let req = ms.requests.get(msg.id())
@@ -349,18 +325,18 @@ describe('messaging', () => {
 
       let rid = builder.createString('cid')
 
-      message.SelfMessaging.Message.startMessage(builder)
-      message.SelfMessaging.Message.addId(builder, rid)
-      message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
+      message.Message.startMessage(builder)
+      message.Message.addId(builder, rid)
+      message.Message.addMsgtype(builder, mtype.MsgType.MSG)
 
-      let msg = message.SelfMessaging.Message.endMessage(builder)
+      let msg = message.Message.endMessage(builder)
 
       builder.finish(msg)
 
       let buf = builder.asUint8Array()
 
       let tbuf = new flatbuffers.ByteBuffer(buf)
-      let hdr = header.SelfMessaging.Header.getRootAsHeader(tbuf)
+      let hdr = header.Header.getRootAsHeader(tbuf)
 
       try {
         await ms['onmessage'](hdr, buf)

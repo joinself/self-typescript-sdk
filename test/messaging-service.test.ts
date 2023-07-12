@@ -6,9 +6,8 @@ import Messaging from '../src/messaging'
 import FactsService from '../src/facts-service'
 
 import { WebSocket, Server } from 'mock-socket'
-import * as acl from '../src/msgproto/acl_generated'
-import * as message from '../src/msgproto/message_generated'
-import * as mtype from '../src/msgproto/types_generated'
+import * as message from '../src/msgproto/message'
+import * as mtype from '../src/msgproto/msg-type'
 import MessagingService from '../src/messaging-service'
 import EncryptionMock from './mocks/encryption-mock'
 
@@ -48,146 +47,6 @@ describe('Messaging service', () => {
     mockServer.close()
   })
 
-  describe('MessagingService::permitConnection', () => {
-    it('happy path', async () => {
-      const msMock = jest.spyOn(ms, 'send_and_wait').mockImplementation(
-        (cid: string, data): Promise<any | Response> => {
-          // The cid is automatically generated
-          expect(cid.length).toEqual(36)
-          // The cid is automatically generated
-          let buf = new flatbuffers.ByteBuffer(data.data.valueOf() as Uint8Array)
-          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf);
-
-          // Envelope
-          expect(aclReq.id().length).toEqual(36)
-          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
-          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.PERMIT)
-
-          // Check ciphertext
-          let input = aclReq.payloadArray()
-          let j = JSON.parse(Buffer.from(input).toString())
-          let payload = JSON.parse(Buffer.from(j['payload'], 'base64').toString())
-
-          expect(payload.iss).toEqual('appID')
-          expect(payload.acl_source).toEqual('selfid')
-
-          return new Promise(resolve => {
-            resolve(true)
-          })
-        }
-      )
-
-      let res = await mss.permitConnection('selfid')
-      expect(res).toBeTruthy()
-    })
-  })
-
-  describe('MessagingService::revokeConnection', () => {
-    it('happy path', async () => {
-      const msMock = jest.spyOn(ms, 'send_and_wait').mockImplementation(
-        (cid: string, data): Promise<any | Response> => {
-          // The cid is automatically generated
-          expect(cid.length).toEqual(36)
-          // The cid is automatically generated
-          let buf = new flatbuffers.ByteBuffer(data.data.valueOf() as Uint8Array)
-          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf);
-
-          // Envelope
-          expect(aclReq.id().length).toEqual(36)
-          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
-          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.REVOKE)
-
-          // Check ciphertext
-          let input = aclReq.payloadArray()
-          let j = JSON.parse(Buffer.from(input).toString())
-          let payload = JSON.parse(Buffer.from(j['payload'], 'base64').toString())
-
-          expect(payload.iss).toEqual('appID')
-
-          return new Promise(resolve => {
-            resolve(true)
-          })
-        }
-      )
-
-      let res = await mss.revokeConnection('selfid')
-      expect(res).toBeTruthy()
-    })
-  })
-
-  describe('MessagingService::allowedConnections', () => {
-    it('happy path', async () => {
-      const msMock = jest.spyOn(ms, 'request').mockImplementation(
-        (cid: string, uuid: string, data): Promise<any | Response> => {
-          // The cid is automatically generated
-          expect(cid.length).toEqual(36)
-          // The cid is automatically generated
-          let buf = new flatbuffers.ByteBuffer(data.valueOf() as Uint8Array)
-          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf)
-
-          // Envelope
-          expect(aclReq.id().length).toEqual(36)
-          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
-          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.LIST)
-          return new Promise(resolve => {
-            resolve(['a', 'b'])
-          })
-        }
-      )
-
-      let res = await mss.allowedConnections()
-      expect(res).toEqual(['a', 'b'])
-    })
-  })
-
-  describe('MessagingService::isPermitted', () => {
-    it('permissions by id', async () => {
-      const msMock = jest.spyOn(ms, 'request').mockImplementation(
-        (cid: string, uuid: string, data): Promise<any | Response> => {
-          // The cid is automatically generated
-          expect(cid.length).toEqual(36)
-          // The cid is automatically generated
-          let buf = new flatbuffers.ByteBuffer(data.valueOf() as Uint8Array)
-          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf)
-
-          // Envelope
-          expect(aclReq.id().length).toEqual(36)
-          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
-          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.LIST)
-
-          return new Promise(resolve => {
-            resolve(['a', 'b'])
-          })
-        }
-      )
-
-      expect(await mss.isPermited('c')).toBeFalsy()
-      expect(await mss.isPermited('a')).toBeTruthy()
-    })
-    it('permissions by wildcard', async () => {
-      const msMock = jest.spyOn(ms, 'request').mockImplementation(
-        (cid: string, uuid: string, data): Promise<any | Response> => {
-          // The cid is automatically generated
-          expect(cid.length).toEqual(36)
-          // The cid is automatically generated
-          let buf = new flatbuffers.ByteBuffer(data.valueOf() as Uint8Array)
-          let aclReq = acl.SelfMessaging.ACL.getRootAsACL(buf)
-
-          // Envelope
-          expect(aclReq.id().length).toEqual(36)
-          expect(aclReq.msgtype()).toEqual(mtype.SelfMessaging.MsgType.ACL)
-          expect(aclReq.command()).toEqual(mtype.SelfMessaging.ACLCommand.LIST)
-
-          return new Promise(resolve => {
-            resolve(['*'])
-          })
-        }
-      )
-
-      expect(await mss.isPermited('a')).toBeTruthy()
-    })
-  })
-
   describe('MessagingService::subscribe', () => {
     it('happy path', async () => {
       const msMock = jest
@@ -214,11 +73,11 @@ describe('Messaging service', () => {
           // The cid is automatically generated
           expect(cid != undefined).toBeTruthy()
           let buf = new flatbuffers.ByteBuffer(data.data.valueOf()[0] as Uint8Array)
-          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+          let msg = message.Message.getRootAsMessage(buf);
 
           // Envelope
           expect(msg.id().length).toEqual(36)
-          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
+          expect(msg.msgtype()).toEqual(mtype.MsgType.MSG)
 
           // Check ciphertext
           let input = msg.ciphertextArray()
@@ -254,11 +113,11 @@ describe('Messaging service', () => {
           expect(cid != undefined).toBeTruthy()
           // The cid is automatically generated
           let buf = new flatbuffers.ByteBuffer(data.data.valueOf()[0] as Uint8Array)
-          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+          let msg = message.Message.getRootAsMessage(buf);
 
           // Envelope
           expect(msg.id().length).toEqual(36)
-          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
+          expect(msg.msgtype()).toEqual(mtype.MsgType.MSG)
 
           // Check ciphertext
           let input = msg.ciphertextArray()

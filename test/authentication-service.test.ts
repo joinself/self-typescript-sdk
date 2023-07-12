@@ -7,8 +7,8 @@ import Messaging from '../src/messaging'
 import MessagingService from '../src/messaging-service'
 
 import { WebSocket, Server } from 'mock-socket'
-import * as message from '../src/msgproto/message_generated'
-import * as mtype from '../src/msgproto/types_generated'
+import * as message from '../src/msgproto/message'
+import * as mtype from '../src/msgproto/msg-type'
 import Crypto from '../src/crypto'
 import EncryptionMock from './mocks/encryption-mock'
 
@@ -76,13 +76,6 @@ describe('AuthenticationService', () => {
           })
         }
       )
-      jest.spyOn(messagingService, 'isPermited').mockImplementation(
-        (selfid: string): Promise<Boolean> => {
-          return new Promise(resolve => {
-            resolve(true)
-          })
-        }
-      )
 
       const msMock = jest.spyOn(ms, 'request').mockImplementation(
         (cid: string, uuid: string, data): Promise<any> => {
@@ -90,13 +83,13 @@ describe('AuthenticationService', () => {
           expect(cid.length).toEqual(36)
           // The cid is automatically generated
           let buf = new flatbuffers.ByteBuffer(data[0].valueOf() as Uint8Array)
-          let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+          let msg = message.Message.getRootAsMessage(buf);
 
           // Envelope
           expect(msg.id().length).toEqual(36)
           expect(msg.recipient()).toEqual('26742678155:cjK0uSMXQjKeaKGaibkVGZ')
           expect(msg.sender()).toEqual('appID:1')
-          expect(msg.msgtype()).toEqual(mtype.SelfMessaging.MsgType.MSG)
+          expect(msg.msgtype()).toEqual(mtype.MsgType.MSG)
 
           // Check ciphertext
           let input = msg.ciphertextArray()
@@ -146,35 +139,6 @@ describe('AuthenticationService', () => {
       )
     })
 
-    it('fails when callback connection is not permitted', async () => {
-      const axios = require('axios')
-      jest.mock('axios')
-      axios.get.mockResolvedValue({
-        status: 200,
-        data: ['deviceID']
-      })
-
-      jest.spyOn(is, 'app').mockImplementation(
-        (appID: string): Promise<any> => {
-          return new Promise(resolve => {
-            resolve({ paid_actions: true })
-          })
-        }
-      )
-
-      jest.spyOn(messagingService, 'isPermited').mockImplementation(
-        (selfid: string): Promise<Boolean> => {
-          return new Promise(resolve => {
-            resolve(false)
-          })
-        }
-      )
-
-      await expect(auth.request('selfid')).rejects.toThrowError(
-        "You're not permitting connections from selfid"
-      )
-    })
-
     it('rejected auth request', async () => {
       const axios = require('axios')
       jest.mock('axios')
@@ -186,13 +150,6 @@ describe('AuthenticationService', () => {
         (appID: string): Promise<any> => {
           return new Promise(resolve => {
             resolve({ paid_actions: true })
-          })
-        }
-      )
-      jest.spyOn(messagingService, 'isPermited').mockImplementation(
-        (selfid: string): Promise<Boolean> => {
-          return new Promise(resolve => {
-            resolve(true)
           })
         }
       )
@@ -223,13 +180,6 @@ describe('AuthenticationService', () => {
           })
         }
       )
-      jest.spyOn(messagingService, 'isPermited').mockImplementation(
-        (selfid: string): Promise<Boolean> => {
-          return new Promise(resolve => {
-            resolve(true)
-          })
-        }
-      )
 
       const msMock = jest.spyOn(ms, 'request').mockImplementation(
         (cid: string, uuid: string, data): Promise<any> => {
@@ -237,7 +187,7 @@ describe('AuthenticationService', () => {
           expect(cid).toEqual('cid')
           // The cid is automatically generated
           let buf = new flatbuffers.ByteBuffer(data[0].valueOf() as Uint8Array)
-          let msg = message.SelfMessaging.Message.getRootAsMessage(buf)
+          let msg = message.Message.getRootAsMessage(buf)
           let input = msg.ciphertextArray()
 
           let ciphertext = JSON.parse(Buffer.from(input).toString())

@@ -220,18 +220,6 @@ describe("chat-service", () => {
         }
       )
 
-      let membersCall = 0
-      const msMockPermit = jest.spyOn(mss, 'permitConnection').mockImplementation(
-        async (member): Promise<boolean|Response> => {
-          expect(member).toContainEqual(members[membersCall])
-          membersCall = membersCall + 1
-
-          return new Promise(resolve => {
-            resolve(true)
-          })
-        }
-      )
-
       await cs.join(gid, members)
     })
   })

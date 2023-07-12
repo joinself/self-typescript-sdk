@@ -157,11 +157,6 @@ export default class ChatService {
    * @param members list of group members.
    */
    async join(gid: string, members: string[]) {
-     // Allow incoming connections from the given members.
-    for(var i =0; i < members.length; i++) {
-      await this.ms.permitConnection(members[i])
-    }
-
     // Create missing sessions with group members.
     await this.createMissingSessions(members)
 

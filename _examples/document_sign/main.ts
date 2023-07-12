@@ -24,8 +24,6 @@ async function setupSDK(appID, appSecret): Promise<SelfSDK> {
   const sdk = await SelfSDK.build( appID, appSecret, "random", storageFolder, opts);
   await sdk.start()
 
-  await sdk.messaging().permitConnection("*")
-
   return sdk
 }
 

@@ -14,8 +14,9 @@ import IdentityService from './identity-service'
 import Jwt from './jwt'
 import Messaging from './messaging'
 import Fact from './fact'
-import * as message from './msgproto/message_generated'
-import * as mtype from './msgproto/types_generated'
+import * as message from './msgproto/message'
+import * as metadata from './msgproto/metadata'
+import * as mtype from './msgproto/msg-type'
 import FactResponse from './fact-response'
 import MessagingService from './messaging-service'
 import Crypto from './crypto'
@@ -83,13 +84,6 @@ export default class Requester {
       }
     }
 
-    if (as == false) {
-      let permited = await this.messagingService.isPermited(selfid)
-      if (!permited) {
-        throw new Error("You're not permitting connections from " + selfid)
-      }
-    }
-
     let id = uuidv4()
 
     // Get user's device
@@ -138,27 +132,27 @@ export default class Requester {
     let rid = builder.createString(id)
     let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
     let rcp = builder.createString(`${selfid}:${device}`)
-    let ctx = message.SelfMessaging.Message.createCiphertextVector(
+    let ctx = message.Message.createCiphertextVector(
       builder,
       Buffer.from(ciphertext)
     )
 
-    message.SelfMessaging.Message.startMessage(builder)
-    message.SelfMessaging.Message.addId(builder, rid)
-    message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
-    message.SelfMessaging.Message.addSender(builder, snd)
-    message.SelfMessaging.Message.addRecipient(builder, rcp)
-    message.SelfMessaging.Message.addCiphertext(builder, ctx)
+    message.Message.startMessage(builder)
+    message.Message.addId(builder, rid)
+    message.Message.addMsgtype(builder, mtype.MsgType.MSG)
+    message.Message.addSender(builder, snd)
+    message.Message.addRecipient(builder, rcp)
+    message.Message.addCiphertext(builder, ctx)
 
-    message.SelfMessaging.Message.addMetadata(builder,
-      message.SelfMessaging.Metadata.createMetadata(
+    message.Message.addMetadata(builder,
+      metadata.Metadata.createMetadata(
         builder,
         flatbuffers.createLong(0, 0),
         flatbuffers.createLong(0, 0)
       )
     )
 
-    let msg = message.SelfMessaging.Message.endMessage(builder)
+    let msg = message.Message.endMessage(builder)
 
     builder.finish(msg)
 
@@ -187,11 +181,6 @@ export default class Requester {
           'Your credits have expired, please log in to the developer portal and top up your account.'
         )
       }
-    }
-
-    let permited = await this.messagingService.isPermited(selfid)
-    if (!permited) {
-      throw new Error("You're not permitting connections from " + selfid)
     }
 
     let id = uuidv4()
