@@ -23,8 +23,6 @@ async function setupSDK(appID, appSecret, opts={'logLevel': 'debug'}): Promise<S
   const sdk = await SelfSDK.build( appID, appSecret, "random", storageFolder, opts);
   await sdk.start()
 
-  await sdk.messaging().permitConnection("*")
-
   return sdk
 }
 

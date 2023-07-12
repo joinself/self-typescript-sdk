@@ -1,4 +1,4 @@
-// Copyright 2020 Self Group Ltd. All Rights Reserved.
+// Copyright 2020 Self Group Ltd. All Rights Reserved.message
 
 import Jwt from './jwt'
 import { v4 as uuidv4 } from 'uuid'
@@ -6,9 +6,9 @@ import { v4 as uuidv4 } from 'uuid'
 import IdentityService from './identity-service'
 import Messaging from './messaging'
 
-import * as acl from './msgproto/acl_generated'
-import * as message from './msgproto/message_generated'
-import * as mtype from './msgproto/types_generated'
+import * as message from './msgproto/message'
+import * as metadata from './msgproto/metadata'
+import * as mtype from './msgproto/msg-type'
 
 import Crypto from './crypto'
 import { logging, Logger } from './logging'
@@ -20,10 +20,6 @@ const logger = logging.getLogger('core.self-sdk')
 
 export interface Request {
   [details: string]: any
-}
-
-export interface ACLRule {
-  [source: string]: Date
 }
 
 /**
@@ -61,56 +57,6 @@ export default class MessagingService {
   }
 
   /**
-   * Allows incomming messages from the specified identity.
-   * @param selfid The identifier for the identity (user or app) to be permitted.
-   * Use `*` to permit all.
-   * @returns a response
-   */
-  async permitConnection(selfid: string): Promise<boolean | Response> {
-    logger.debug('permitting connection')
-    if (this.connections.includes(selfid)) {
-      logger.debug('skipping : connection is already permitted')
-      return true
-    }
-
-    this.connections.push(selfid)
-    let payload = this.jwt.toSignedJson({
-      jti: uuidv4(),
-      cid: uuidv4(),
-      typ: 'acl.permit',
-      iss: this.jwt.appID,
-      sub: this.jwt.appID,
-      iat: new Date(Math.floor(this.jwt.now())).toISOString(),
-      exp: new Date(Math.floor(this.jwt.now() + (1 * 60 * 60))).toISOString(),
-      acl_source: selfid,
-    })
-
-    let id = uuidv4()
-
-    let builder = new flatbuffers.Builder(1024)
-
-    let rid = builder.createString(id)
-    let pld = acl.SelfMessaging.ACL.createPayloadVector(
-      builder,
-      Buffer.from(payload)
-    )
-
-    acl.SelfMessaging.ACL.startACL(builder)
-    acl.SelfMessaging.ACL.addId(builder, rid)
-    acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
-    acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.PERMIT)
-    acl.SelfMessaging.ACL.addPayload(builder, pld)
-
-    let aclReq = acl.SelfMessaging.ACL.endACL(builder)
-
-    builder.finish(aclReq)
-
-    let buf = builder.asUint8Array()
-
-    return this.ms.send_and_wait(id, { data: buf })
-  }
-
-  /**
    * closes the websocket connection.
    */
   close() {
@@ -123,102 +69,6 @@ export default class MessagingService {
    */
   isConnected() {
     return this.ms.connected
-  }
-
-  /**
-   * Lists the current connections of your app.
-   * @returns a list of ACL rules
-   */
-  async allowedConnections(): Promise<String[]> {
-    logger.debug('listing allowed connections')
-
-    if (this.connections.length === 0) {
-      let id = uuidv4()
-
-      let builder = new flatbuffers.Builder(1024)
-
-      let rid = builder.createString(id)
-
-      acl.SelfMessaging.ACL.startACL(builder)
-      acl.SelfMessaging.ACL.addId(builder, rid)
-      acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
-      acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.LIST)
-      let aclReq = acl.SelfMessaging.ACL.endACL(builder)
-
-      builder.finish(aclReq)
-
-      let buf = builder.asUint8Array()
-
-      let res = await this.ms.request(id, id, buf)
-      this.connections = res
-    }
-
-    return this.connections
-  }
-
-  /**
-   * Checks if the current app is allowing incoming messages from the given id.
-   * @param id the self identifier to be checked
-   */
-  async isPermited(id: string): Promise<Boolean> {
-    let ac = await this.allowedConnections()
-    if (ac.includes('*')) {
-      return true
-    }
-
-    if (ac.includes(id)) {
-      return true
-    }
-
-    return false
-  }
-
-  /**
-   * Revokes messages from the given identity
-   * @param selfid identity to revoke
-   * @returns Response
-   */
-  async revokeConnection(selfid: string): Promise<boolean | Response> {
-    logger.debug('revoking connection')
-    const index = this.connections.indexOf(selfid, 0);
-    if (index > -1) {
-      this.connections.splice(index, 1);
-    }
-
-    let payload = this.jwt.toSignedJson({
-      iss: this.jwt.appID,
-      sub: this.jwt.appID,
-      iat: new Date(Math.floor(this.jwt.now())).toISOString(),
-      exp: new Date(Math.floor(this.jwt.now() + 1 * 60)).toISOString(),
-      acl_source: selfid,
-      jti: uuidv4(),
-      cid: uuidv4(),
-      typ: 'acl.revoke'
-    })
-
-    let id = uuidv4()
-
-    let builder = new flatbuffers.Builder(1024)
-
-    let rid = builder.createString(id)
-    let pld = acl.SelfMessaging.ACL.createPayloadVector(
-      builder,
-      Buffer.from(payload)
-    )
-
-    acl.SelfMessaging.ACL.startACL(builder)
-    acl.SelfMessaging.ACL.addId(builder, rid)
-    acl.SelfMessaging.ACL.addMsgtype(builder, mtype.SelfMessaging.MsgType.ACL)
-    acl.SelfMessaging.ACL.addCommand(builder, mtype.SelfMessaging.ACLCommand.REVOKE)
-    acl.SelfMessaging.ACL.addPayload(builder, pld)
-
-    let aclReq = acl.SelfMessaging.ACL.endACL(builder)
-
-    builder.finish(aclReq)
-
-    let buf = builder.asUint8Array()
-
-    return this.ms.send_and_wait(id, { data: buf })
   }
 
   /**
@@ -345,28 +195,28 @@ export default class MessagingService {
     let rid = builder.createString(id)
     let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
     let rcp = builder.createString(`${selfid}:${device}`)
-    let ctx = message.SelfMessaging.Message.createCiphertextVector(
+    let ctx = message.Message.createCiphertextVector(
       builder,
       Buffer.from(ciphertext)
     )
 
-    message.SelfMessaging.Message.startMessage(builder)
-    message.SelfMessaging.Message.addId(builder, rid)
-    message.SelfMessaging.Message.addMsgtype(builder, mtype.SelfMessaging.MsgType.MSG)
-    message.SelfMessaging.Message.addSender(builder, snd)
-    message.SelfMessaging.Message.addRecipient(builder, rcp)
+    message.Message.startMessage(builder)
+    message.Message.addId(builder, rid)
+    message.Message.addMsgtype(builder, mtype.MsgType.MSG)
+    message.Message.addSender(builder, snd)
+    message.Message.addRecipient(builder, rcp)
 
-    message.SelfMessaging.Message.addCiphertext(builder, ctx)
+    message.Message.addCiphertext(builder, ctx)
 
-    message.SelfMessaging.Message.addMetadata(builder,
-      message.SelfMessaging.Metadata.createMetadata(
+    message.Message.addMetadata(builder,
+      metadata.Metadata.createMetadata(
         builder,
         flatbuffers.createLong(0, 0),
         flatbuffers.createLong(0, 0)
       )
     )
 
-    let msg = message.SelfMessaging.Message.endMessage(builder)
+    let msg = message.Message.endMessage(builder)
 
     builder.finish(msg)
 

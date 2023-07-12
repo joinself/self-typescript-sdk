@@ -3,12 +3,11 @@
 import Jwt from './jwt'
 import IdentityService from './identity-service'
 
-import * as acl from './msgproto/acl_generated'
-import * as auth from './msgproto/auth_generated'
-import * as header from './msgproto/header_generated'
-import * as message from './msgproto/message_generated'
-import * as notification from './msgproto/notification_generated'
-import * as mtype from './msgproto/types_generated'
+import * as auth from './msgproto/auth'
+import * as header from './msgproto/header'
+import * as message from './msgproto/message'
+import * as notification from './msgproto/notification'
+import * as mtype from './msgproto/msg-type'
 import Crypto from './crypto'
 import FactResponse from './fact-response'
 
@@ -165,20 +164,6 @@ export default class Messaging {
     return payload
   }
 
-  private processIncommingACL(id: string, msg: string) {
-    let list = JSON.parse(msg)
-    let req = this.requests.get(id)
-    if (!req) {
-      this.logger.debug(`ACL request not found ${id}`)
-      return
-    }
-
-    req.response = list
-    req.responded = true
-    req.acknowledged = true // acls list does not respond with ACK
-    this.requests.set(id, req)
-  }
-
   close() {
     if (this.connected) {
       this.connected = false
@@ -186,12 +171,12 @@ export default class Messaging {
     }
   }
 
-  private async onmessage(hdr: header.SelfMessaging.Header, data: Uint8Array) {
+  private async onmessage(hdr: header.Header, data: Uint8Array) {
     this.logger.debug(`received ${hdr.id()} (${hdr.msgtype()})`)
     switch (hdr.msgtype()) {
-      case mtype.SelfMessaging.MsgType.ERR: {
+      case mtype.MsgType.ERR: {
         let buf = new flatbuffers.ByteBuffer(data)
-        let ntf = notification.SelfMessaging.Notification.getRootAsNotification(buf);
+        let ntf = notification.Notification.getRootAsNotification(buf);
 
         let sw = 0
         Array.from(this.requests.keys()).forEach(key => {
@@ -213,20 +198,13 @@ export default class Messaging {
         this.logger.warn(ntf.error());
         break
       }
-      case mtype.SelfMessaging.MsgType.ACK: {
+      case mtype.MsgType.ACK: {
         this.mark_as_acknowledged(hdr.id())
         break
       }
-      case mtype.SelfMessaging.MsgType.ACL: {
+      case mtype.MsgType.MSG: {
         let buf = new flatbuffers.ByteBuffer(data)
-        let resp = acl.SelfMessaging.ACL.getRootAsACL(buf)
-
-        this.processIncommingACL(resp.id(), Buffer.from(resp.payloadArray()).toString())
-        break
-      }
-      case mtype.SelfMessaging.MsgType.MSG: {
-        let buf = new flatbuffers.ByteBuffer(data)
-        let msg = message.SelfMessaging.Message.getRootAsMessage(buf);
+        let msg = message.Message.getRootAsMessage(buf);
         this.logger.debug(`message "${hdr.id()}" received from ${msg.sender()}`)
 
         await this.processIncommingMessage(
@@ -270,7 +248,7 @@ export default class Messaging {
 
     this.ws.onmessage = async event => {
       let buf = new flatbuffers.ByteBuffer(event.data)
-      let hdr = header.SelfMessaging.Header.getRootAsHeader(buf)
+      let hdr = header.Header.getRootAsHeader(buf)
       await this.onmessage(hdr, event.data)
     }
   }
@@ -285,13 +263,13 @@ export default class Messaging {
     let tkn = builder.createString(token)
     let did = builder.createString(this.jwt.deviceID)
 
-    auth.SelfMessaging.Auth.startAuth(builder)
-    auth.SelfMessaging.Auth.addId(builder, rid)
-    auth.SelfMessaging.Auth.addMsgtype(builder, mtype.SelfMessaging.MsgType.AUTH)
-    auth.SelfMessaging.Auth.addDevice(builder, did)
-    auth.SelfMessaging.Auth.addToken(builder, tkn)
-    auth.SelfMessaging.Auth.addOffset(builder, flatbuffers.createLong(this.getOffset(), 0))
-    let authReq = auth.SelfMessaging.Auth.endAuth(builder)
+    auth.Auth.startAuth(builder)
+    auth.Auth.addId(builder, rid)
+    auth.Auth.addMsgtype(builder, mtype.MsgType.AUTH)
+    auth.Auth.addDevice(builder, did)
+    auth.Auth.addToken(builder, tkn)
+    auth.Auth.addOffset(builder, flatbuffers.createLong(this.getOffset(), 0))
+    let authReq = auth.Auth.endAuth(builder)
 
     builder.finish(authReq)
 
