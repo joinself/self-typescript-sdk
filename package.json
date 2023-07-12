@@ -63,6 +63,7 @@
       "js"
     ],
     "coveragePathIgnorePatterns": [
+      "src/msgproto/",
       "/node_modules/",
       "/test/"
     ],
