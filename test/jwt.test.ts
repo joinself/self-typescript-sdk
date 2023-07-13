@@ -1,7 +1,7 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
 import Jwt from '../src/jwt'
-import SelfSDK from '../src/self-sdk'
+import { FilesManager } from 'turbodepot-node';
 
 /**
  * Jwt test
@@ -15,7 +15,9 @@ describe('jwt', () => {
   beforeEach(async () => {
     pk = 'UZXk4PSY6LN29R15jUVuDabsoH7VhFkVWGApA0IYLaY'
     sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
-    jwt = await Jwt.build('appID', sk, { ntp: false })
+    let filesManager = new FilesManager();
+    let tmpFolder = await filesManager.createTempDirectory('jwt');
+    jwt = await Jwt.build('appID', sk, tmpFolder, { ntp: false })
   })
 
   afterEach(async () => {

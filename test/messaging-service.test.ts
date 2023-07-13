@@ -10,6 +10,7 @@ import * as message from '../src/msgproto/message'
 import * as mtype from '../src/msgproto/msg-type'
 import MessagingService from '../src/messaging-service'
 import EncryptionMock from './mocks/encryption-mock'
+import { FilesManager } from 'turbodepot-node';
 
 import * as flatbuffers from 'flatbuffers'
 
@@ -22,7 +23,9 @@ describe('Messaging service', () => {
   beforeEach(async () => {
     let pk = 'UZXk4PSY6LN29R15jUVuDabsoH7VhFkVWGApA0IYLaY'
     let sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
-    jwt = await Jwt.build('appID', sk, { ntp: false })
+    let filesManager = new FilesManager();
+    let tmpFolder = await filesManager.createTempDirectory('messaging-service');
+    jwt = await Jwt.build('appID', sk, tmpFolder, { ntp: false })
 
     let is = new IdentityService(jwt, 'https://api.joinself.com/')
 

@@ -129,6 +129,7 @@
   "dependencies": {
     "@types/libsodium-wrappers": "^0.7.9",
     "@types/uuid": "^8.3.0",
+    "async-mutex": "^0.4.0",
     "axios": ">=0.24.0",
     "eslint": "^7.3.2",
     "flatbuffers": "^2.0.3",
@@ -141,12 +142,15 @@
     "qrcode-generator-ts": "^0.0.3",
     "self-crypto": "^1.0.32",
     "shelljs": "^0.8.4",
+    "sqlite": "^3.0.6",
+    "sqlite3": "^5.1.6",
     "string-width": "^5.0.1",
     "text-encoding": "^0.7.0",
     "ts-protoc-gen": "^0.15.0",
     "uuid": "^8.3.2",
     "webpack-dev-server": "^4.5.0",
     "websocket": "^1.0.33",
+    "turbodepot-node": "7.0.3",
     "ws": "^8.3.0"
   }
 }

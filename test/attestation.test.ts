@@ -5,6 +5,7 @@ import Attestation from '../src/attestation'
 import IdentityService from '../src/identity-service'
 import at from './__fixtures__/attestation'
 import { JwtInput } from '../src/jwt'
+import { FilesManager } from 'turbodepot-node';
 
 /**
  * Attestation test
@@ -18,7 +19,10 @@ describe('jwt', () => {
   beforeEach(async () => {
     pk = 'HFVVpSs8W804ok2khjn_a_ccHc6yvzhg2lvwKKxjQM0'
     sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
-    jwt = await Jwt.build('appID', sk, { ntp: false })
+
+    let filesManager = new FilesManager();
+    let tmpFolder = await filesManager.createTempDirectory('attestation');
+    jwt = await Jwt.build('appID', sk, tmpFolder, { ntp: false })
     is = new IdentityService(jwt, 'https://api.joinself.com/')
   })
 

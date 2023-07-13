@@ -3,6 +3,8 @@
 import Jwt from '../src/jwt'
 import IdentityService from '../src/identity-service'
 import Crypto from '../src/crypto'
+import { FilesManager } from 'turbodepot-node';
+import SQLiteStorage from '../src/storage'
 
 var fs = require('fs')
 var deleteFolderRecursive = function(path) {
@@ -43,10 +45,13 @@ describe('crypto', () => {
   })
 
   it('encrypt / decrypt', async () => {
-    let aliceJWT = await Jwt.build('aliceID', skA, { ntp: false })
+    let filesManager = new FilesManager();
+    let aTmpFolder = await filesManager.createTempDirectory('sdktest');
+    let bTmpFolder = await filesManager.createTempDirectory('sdktest');
+    let aliceJWT = await Jwt.build('aliceID', skA, aTmpFolder, { ntp: false })
     let aliceIS = new IdentityService(aliceJWT, 'https://api.joinself.com/')
 
-    let bobJWT = await Jwt.build('bobID', skB, { ntp: false })
+    let bobJWT = await Jwt.build('bobID', skB, bTmpFolder, { ntp: false })
     let bobIS = new IdentityService(bobJWT, 'https://api.joinself.com/')
 
     jest.spyOn(aliceIS, 'postRaw').mockImplementation(
@@ -82,21 +87,21 @@ describe('crypto', () => {
       }
     )
 
-    const tmp = require('tmp')
-    const tmpalice = tmp.dirSync()
-    const tmpbob = tmp.dirSync()
+    let bStorage = new SQLiteStorage('aliceID', '1', aTmpFolder)
+    await bStorage.setup()
+    let bobC = await Crypto.build(bobIS, '1', bStorage, 'storage_key_bob')
 
-    let aliceC = await Crypto.build(aliceIS, '1', tmpalice.name, 'storage_key_alice')
-    let bobC = await Crypto.build(bobIS, '1', tmpbob.name, 'storage_key_bob')
+    let aStorage = new SQLiteStorage('aliceID', '1', bTmpFolder)
+    await aStorage.setup()
+    let aliceC = await Crypto.build(aliceIS, '1', aStorage, 'storage_key_alice')
 
     let ciphertext = await aliceC.encrypt('hello bob', [{
       id: 'bobID',
       device: '1',
     }])
-    let plaintext = await bobC.decrypt(ciphertext, 'aliceID', '1')
-    console.log(plaintext)
+    expect(ciphertext == undefined).toBeFalsy()
 
-    deleteFolderRecursive(tmpalice.name)
-    deleteFolderRecursive(tmpbob.name)
+    let plaintext = await bobC.decrypt(ciphertext, 'aliceID', '1')
+    expect(plaintext).toEqual('hello bob')
   })
 })

@@ -10,6 +10,7 @@ import * as message from '../src/msgproto/message'
 import * as mtype from '../src/msgproto/msg-type'
 import Crypto from '../src/crypto'
 import EncryptionMock from './mocks/encryption-mock'
+import { FilesManager } from 'turbodepot-node'
 
 import * as flatbuffers from 'flatbuffers'
 import { eventNames } from 'process'
@@ -28,7 +29,9 @@ describe('messaging', () => {
     pk = 'UZXk4PSY6LN29R15jUVuDabsoH7VhFkVWGApA0IYLaY'
     sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
 
-    jwt = await Jwt.build('appID', sk, { ntp: false })
+    let filesManager = new FilesManager();
+    let tmpFolder = await filesManager.createTempDirectory('messaging');
+    jwt = await Jwt.build('appID', sk, tmpFolder, { ntp: false })
     is = new IdentityService(jwt, 'https://api.joinself.com/')
     ec = new EncryptionMock()
     ms = new Messaging('', jwt, is, ec)
