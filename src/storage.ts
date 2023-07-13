@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 
-import { open, Database } from 'sqlite'
+import * as sqlite from 'sqlite'
 
 import * as path from 'path';
 
@@ -60,7 +60,7 @@ export default class SQLiteStorage {
   }
 
   public async setup() {
-    this.db = await open(`${this.storageFolder}/identities/devices/${this.appDevice}/self.db`)
+    this.db = await sqlite.open(`${this.storageFolder}/identities/devices/${this.appDevice}/self.db`)
 
     await this.setPragmas()
     await this.createAccountsTable()
@@ -230,7 +230,7 @@ interface Account {
 }
 
 class FileToSQLiteStorageMigrator {
-  db: Database
+  db: sqlite.Database
   basePath: string
   appID: string
 
