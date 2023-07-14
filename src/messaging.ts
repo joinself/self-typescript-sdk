@@ -91,12 +91,8 @@ export default class Messaging {
     try {
       let issuer = sender.split(':')
 
-      console.log("decrypting")
       let plaintext = await this.encryptionClient.decrypt(ciphertext, issuer[0], issuer[1])
-      console.log("decrypted")
-      console.log(plaintext)
       let payload = JSON.parse(plaintext)
-      console.log("decoded")
       this.logger.debug(`decoding ${plaintext}`)
 
       const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
