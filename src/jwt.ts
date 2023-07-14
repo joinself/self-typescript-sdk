@@ -2,8 +2,8 @@
 
 import { v4 as uuidv4 } from 'uuid'
 import { NTPClient } from 'ntpclient'
-import { logging, Logger } from './logging'
-import { IOManager, SessionStorage } from './storage'
+import { logging } from './logging'
+import { SessionStorage } from './storage'
 import SQLiteStorage from './storage';
 
 const _sodium = require('libsodium-wrappers')
