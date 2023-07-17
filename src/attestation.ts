@@ -25,12 +25,9 @@ export default class Attestation {
     jwt: Jwt,
     is: IdentityService
   ): Promise<any> {
-    let payload = JSON.parse(Buffer.from(input.payload, 'base64').toString())
+    const payload = JSON.parse(Buffer.from(input.payload, 'base64').toString())
 
-    let a = new Attestation()
-
-    console.log(payload)
-
+    const a = new Attestation()
     a.to = payload.sub
     a.origin = payload.iss
     a.aud = payload.aud
@@ -42,9 +39,9 @@ export default class Attestation {
       if (payload['facts'] == undefined) {
         return
       } else {
-        for (var i = 0; i < payload['facts'].length; i++) {
-          if (payload['facts'][i]['key'] == name) {
-            a.value = payload['facts'][i]['value']
+        for (const fact of payload['facts']) {
+          if (fact['key'] == name) {
+            a.value = fact['value']
           }
         }
       }
@@ -53,8 +50,8 @@ export default class Attestation {
     }
 
     const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
-    let header = JSON.parse(decode(input['protected']))
-    let k = await is.publicKey(payload.iss, header['kid'])
+    const header = JSON.parse(decode(input['protected']))
+    const k = await is.publicKey(payload.iss, header['kid'])
     a.verified = jwt.verify(input, k)
 
     return a

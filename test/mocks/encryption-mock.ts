@@ -12,9 +12,9 @@ export default class EncryptionMock {
   storageKey: string
   storageFolder: string
   path: string
-  account: Account
   logger: Logger
   storage: SessionStorage
+  account: any
   mutex: Mutex
 
   public async encrypt(

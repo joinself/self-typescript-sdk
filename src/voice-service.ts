@@ -17,12 +17,12 @@ export default class VoiceService {
    * @param name
    * @param cid
    */
-  setup(recipient: string, name: string, cid: string) {
-    var payload = { typ: "chat.voice.setup" }
+  async setup(recipient: string, name: string, cid: string) {
+    const payload = { typ: "chat.voice.setup" }
     payload['cid'] = cid
-    payload['data'] = { name: name }
+    payload['data'] = { name }
 
-    this.ms.send([recipient], payload)
+    await this.ms.send([recipient], payload)
   }
 
   /**
@@ -44,14 +44,14 @@ export default class VoiceService {
    * @param peer_info
    * @param data
    */
-  start(recipient: string, cid: string, call_id: string, peer_info: string, data: any) {
-    var payload = { typ: "chat.voice.start" }
+  async start(recipient: string, cid: string, call_id: string, peer_info: string, data: any) {
+    const payload = { typ: "chat.voice.start" }
     payload['cid'] = cid
     payload['call_id'] = call_id
     payload['peer_info'] = peer_info
     payload['data'] = data
 
-    this.ms.send([recipient], payload)
+    await this.ms.send([recipient], payload)
   }
 
   /**
@@ -73,15 +73,15 @@ export default class VoiceService {
    * @param peer_info
    * @param data
    */
-  accept(recipient: string, cid: string, call_id: string, peer_info: string, data: any) {
-    var payload = { typ: "chat.voice.accept" }
+  async accept(recipient: string, cid: string, call_id: string, peer_info: string, data: any) {
+    const payload = { typ: "chat.voice.accept" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id
     payload['peer_info'] = peer_info
     payload['data'] = data
 
-    this.ms.send([recipient], payload)
+    await this.ms.send([recipient], payload)
   }
 
   /**
@@ -101,13 +101,13 @@ export default class VoiceService {
    * @param cid
    * @param call_id
    */
-  stop(recipient: string, cid: string, call_id: string) {
-    var payload = { typ: "chat.voice.stop" }
+  async stop(recipient: string, cid: string, call_id: string) {
+    const payload = { typ: "chat.voice.stop" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id
 
-    this.ms.send([recipient], payload)
+    await this.ms.send([recipient], payload)
   }
 
   /**
@@ -127,13 +127,13 @@ export default class VoiceService {
    * @param cid
    * @param call_id
    */
-  busy(recipient: string, cid: string, call_id: string) {
-    var payload = { typ: "chat.voice.busy" }
+  async busy(recipient: string, cid: string, call_id: string) {
+    const payload = { typ: "chat.voice.busy" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id
 
-    this.ms.send([recipient], payload)
+    await this.ms.send([recipient], payload)
   }
 
   /**
@@ -153,13 +153,13 @@ export default class VoiceService {
    * @param cid
    * @param call_id
    */
-  summary(recipient: string, cid: string, call_id: string) {
-    var payload = { typ: "chat.voice.summary" }
+  async summary(recipient: string, cid: string, call_id: string) {
+    const payload = { typ: "chat.voice.summary" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id
 
-    this.ms.send([recipient], payload)
+    await this.ms.send([recipient], payload)
   }
 
   /**

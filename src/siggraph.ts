@@ -17,7 +17,7 @@ class Operation {
   sequence: any
   previous: any
   timestamp: any
-  actions: Array<Action>
+  actions: Action[]
   version: string
   signingKey: string
   jws: string
@@ -25,8 +25,8 @@ class Operation {
   constructor(operation: any) {
     this.jws = operation
 
-    let op = JSON.parse(Buffer.from(this.jws['payload'], 'base64').toString())
-    let hdr = JSON.parse(Buffer.from(this.jws['protected'], 'base64').toString())
+    const op = JSON.parse(Buffer.from(this.jws['payload'], 'base64').toString())
+    const hdr = JSON.parse(Buffer.from(this.jws['protected'], 'base64').toString())
 
     this.sequence = op['sequence']
     this.previous = op['previous']
@@ -63,9 +63,9 @@ class Operation {
     }
   }
 
-  revokes(kid: string): Boolean {
-    for (var i = 0; i < this.actions.length; i++) {
-      if (this.actions[i].kid == kid && this.actions[i].action == ACTION_REVOKE) {
+  revokes(kid: string): boolean {
+    for (const action of this.actions) {
+      if (action.kid == kid && action.action == ACTION_REVOKE) {
         return true
       }
     }
@@ -81,8 +81,8 @@ export class Key {
   revoked: number
   publicKey: Key
   rawPublicKey: string
-  incoming: Array<Key>
-  outgoing: Array<Key>
+  incoming: Key[]
+  outgoing: Key[]
 
   constructor(action: Action, sodium: any) {
     this.kid = action.kid
@@ -100,7 +100,7 @@ export class Key {
     this.outgoing = []
   }
 
-  validAt(at: number): Boolean {
+  validAt(at: number): boolean {
     return (this.created <= at && this.revoked == 0) || (this.created <= at && this.revoked > at)
   }
 
@@ -112,12 +112,12 @@ export class Key {
     return this.revoked > 0
   }
 
-  childKeys(): Array<Key> {
+  childKeys(): Key[] {
     let keys = []
     keys = keys.concat(this.outgoing)
 
-    for (var i = 0; i < this.outgoing.length; i++) {
-      keys = keys.concat(this.outgoing[i].childKeys())
+    for (const out of this.outgoing) {
+      keys = keys.concat(out.childKeys())
     }
 
     return keys
@@ -129,11 +129,11 @@ export default class SignatureGraph {
   keys: Record<string, Key>
   devices: Record<string, Key>
   signatures: any
-  operations: Array<Operation>
+  operations: Operation[]
   recoveryKey: Key
   sodium: any
 
-  constructor(history: Array<any>, sodium: any) {
+  constructor(history: any[], sodium: any) {
     this.root = undefined
     this.keys = {}
     this.devices = {}
@@ -142,17 +142,17 @@ export default class SignatureGraph {
     this.recoveryKey = undefined
     this.sodium = sodium
 
-    for (var i = 0; i < history.length; i++) {
-      this.execute(history[i])
+    for (const op of history) {
+      this.execute(op)
     }
   }
 
-  public static async build(history: Array<any>): Promise<SignatureGraph> {
+  public static async build(history: any[]): Promise<SignatureGraph> {
     const _sodium = require('libsodium-wrappers')
     await _sodium.ready
     const sodium = _sodium
 
-    let sg = new SignatureGraph(history, sodium)
+    const sg = new SignatureGraph(history, sodium)
     return sg
   }
 
@@ -171,7 +171,8 @@ export default class SignatureGraph {
   }
 
   execute(operation) {
-    let op = new Operation(operation)
+    let sk: Key
+    const op = new Operation(operation)
 
     if (op.sequence != this.operations.length) {
       throw new Error('operation sequence is out of order')
@@ -186,7 +187,7 @@ export default class SignatureGraph {
         throw new Error('operation timestamp occurs before previous operation')
       }
 
-      let sk = this.keys[op.signingKey]
+      sk = this.keys[op.signingKey]
       if (sk == undefined) {
         throw new Error('operation specifies a signing key that does not exist (A)')
       }
@@ -203,14 +204,14 @@ export default class SignatureGraph {
     }
 
     this.executeActions(op)
-    let sk = this.keys[op.signingKey]
+    sk = this.keys[op.signingKey]
 
     if (op.timestamp < sk.created || (sk.isRevoked() && op.timestamp > sk.revoked)) {
       throw new Error('operation was signed with a key that was revoked')
     }
 
-    let msg = `${op.jws['protected']}.${op.jws['payload']}`
-    let sig = this.sodium.from_base64(
+    const msg = `${op.jws['protected']}.${op.jws['payload']}`
+    const sig = this.sodium.from_base64(
       op.jws['signature'],
       this.sodium.base64_variants.URLSAFE_NO_PADDING
     )
@@ -219,7 +220,7 @@ export default class SignatureGraph {
     }
 
     let hasValidKey = false
-    for (let k in this.keys) {
+    for (const k in this.keys) {
       if (!this.keys[k].isRevoked()) {
         hasValidKey = true
       }
@@ -240,8 +241,7 @@ export default class SignatureGraph {
   }
 
   private executeActions(op: Operation) {
-    for (var i = 0; i < op.actions.length; i++) {
-      let action = op.actions[i]
+    for (const action of op.actions) {
       if (action.kid == undefined) {
         throw new Error('operation action does not provide a key identifier')
       }
@@ -289,7 +289,7 @@ export default class SignatureGraph {
       throw new Error('operation contains a key with a duplicate identifier')
     }
 
-    let k = new Key(action, this.sodium)
+    const k = new Key(action, this.sodium)
     switch (action.type) {
       case KEY_TYPE_DEVICE:
         if (action.did in this.devices) {
@@ -297,7 +297,7 @@ export default class SignatureGraph {
             throw new Error('operation contains more than one active key for a device')
           }
         }
-        let dk = this.devices[action.did]
+        const dk = this.devices[action.did]
         break
       case KEY_TYPE_RECOVERY:
         if (this.recoveryKey != undefined) {
@@ -319,7 +319,7 @@ export default class SignatureGraph {
     if (!(operation.signingKey in this.keys)) {
       throw new Error('operation specifies a signing key that does not exist (B)')
     }
-    let parent = this.keys[operation.signingKey]
+    const parent = this.keys[operation.signingKey]
     if (parent == undefined) {
       throw new Error('operation specifies a signing key that does not exist (C)')
     }
@@ -332,7 +332,7 @@ export default class SignatureGraph {
     if (!(action.kid in this.keys)) {
       throw new Error('operation tries to revoke a key that does not exist')
     }
-    let k = this.keys[action.kid]
+    const k = this.keys[action.kid]
     if (k == undefined) {
       throw new Error('operation tries to revoke a key that does not exist')
     }
@@ -344,7 +344,7 @@ export default class SignatureGraph {
     }
 
     k.revoke(action.from)
-    let sk = this.keys[operation.signingKey]
+    const sk = this.keys[operation.signingKey]
 
     if (!(operation.signingKey in this.keys)) {
       throw new Error('operation specifies a signing key that does not exist (D)')
@@ -353,23 +353,24 @@ export default class SignatureGraph {
       throw new Error('operation specifies a signing key that does not exist (E)')
     }
 
+    let cks: Key[]
     // if this is an account recovery, nuke all existing keys
     if (sk.type == KEY_TYPE_RECOVERY) {
       this.root.revoke(action.from)
-      let cks = this.root.childKeys()
-      for (var i = 0; i < cks.length; i++) {
-        if (!cks[i].revoked) {
-          cks[i].revoke(action.from)
+      cks = this.root.childKeys()
+      for (const ck of cks){
+        if (!ck.revoked) {
+          ck.revoke(action.from)
         }
       }
 
       return
     }
 
-    let cks = k.childKeys()
-    for (var i = 0; i < cks.length; i++) {
-      if (!(cks[i].created < action.from)) {
-        cks[i].revoke(action.from)
+    cks = k.childKeys()
+    for (const ck of cks) {
+      if (!(ck.created < action.from)) {
+        ck.revoke(action.from)
       }
     }
   }

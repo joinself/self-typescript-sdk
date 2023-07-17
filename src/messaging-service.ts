@@ -83,7 +83,7 @@ export default class MessagingService {
    * @param recipient the recipient/s identifier/s.
    * @param request the request to be sent.
    */
-  async send(recipient: (string | Array<string>), request: Request, opts?: any): Promise<Response | boolean | void> {
+  async send(recipient: (string | string[]), request: Request, opts?: any): Promise<Response | boolean | void> {
     let recipientIDs = []
     let sub = ""
     if (!Array.isArray(recipient)) {
@@ -96,7 +96,7 @@ export default class MessagingService {
 
     // Check if the current app still has credits
     if (this.jwt.checkPaidActions) {
-      let app = await this.is.app(this.jwt.appID)
+      const app = await this.is.app(this.jwt.appID)
       if (app.paid_actions == false) {
         throw new Error(
           'Your credits have expired, please log in to the developer portal and top up your account.'
@@ -104,47 +104,46 @@ export default class MessagingService {
       }
     }
 
-    let j = this.buildRequest(sub, request)
-    console.log(j)
-    let plaintext = this.jwt.toSignedJson(j)
+    const j = this.buildRequest(sub, request)
+    const plaintext = this.jwt.toSignedJson(j)
 
-    let recipients:Recipient[] = []
+    const recipients:Recipient[] = []
 
     // Send the message to all recipient devices.
-    for (var k = 0; k < recipientIDs.length; k++) {
-      if (recipientIDs[k] != this.jwt.appID) {
-        let devices = await this.is.devices(recipientIDs[k])
-        for (var i = 0; i < devices.length; i++) {
-          this.logger.debug(`adding recipient ${recipientIDs[k]}:${devices[i]}`)
+    for (const recipientID of recipientIDs) {
+      if (recipientID != this.jwt.appID) {
+        const devices = await this.is.devices(recipientID)
+        for (const device of devices) {
+          this.logger.debug(`adding recipient ${recipientID}:${device}`)
           recipients.push({
-            id: recipientIDs[k],
-            device: devices[i]
+            id: recipientID,
+            device
           })
         }
       }
     }
 
     // Send the message also to all current identity devices for synchronization.
-    let currentIdentityDevices = await this.is.devices(this.jwt.appID)
-    for (var i = 0; i < currentIdentityDevices.length; i++) {
-      if (currentIdentityDevices[i] != this.jwt.deviceID) {
-        this.logger.debug(`adding recipient ${this.jwt.appID}:${currentIdentityDevices[i]}`)
+    const currentIdentityDevices = await this.is.devices(this.jwt.appID)
+    for (const currentIdentityDevice of currentIdentityDevices) {
+      if (currentIdentityDevice != this.jwt.deviceID) {
+        this.logger.debug(`adding recipient ${this.jwt.appID}:${currentIdentityDevice}`)
         recipients.push({
           id: this.jwt.appID,
-          device: currentIdentityDevices[i]
+          device: currentIdentityDevice
         })
       }
     }
 
-    let ct = await this.crypto.encrypt(plaintext, recipients)
+    const ct = await this.crypto.encrypt(plaintext, recipients)
 
-    var msgs = []
-    for (var i = 0; i < recipients.length; i++) {
-      var msg = await this.buildEnvelope(uuidv4(), recipients[i].id, recipients[i].device, ct)
+    const msgs = []
+    for (const r of recipients){
+      const msg = await this.buildEnvelope(uuidv4(), r.id, r.device, ct)
       msgs.push(msg)
     }
 
-    let req = { data: msgs, waitForResponse: false }
+    const req = { data: msgs, waitForResponse: false }
     if (opts && opts["waitForResponse"] == true) {
       return await this.ms.request(j.jti, j.jti, msgs)
     }
@@ -156,17 +155,17 @@ export default class MessagingService {
    * @param recipient the recipient's identifier.
    * @param message the message to be sent.
    */
-  async notify(recipient: string, message: string): Promise<void> {
+  async notify(recipient: string, description: string): Promise<void> {
     await this.send(recipient, {
       typ: 'identities.notify',
-      description: message
+      description
     })
   }
 
   private buildRequest(selfid: string, request: Request): Request {
     // Calculate expirations
-    let iat = new Date(Math.floor(this.jwt.now()))
-    let exp = new Date(Math.floor(this.jwt.now() + 300000 * 60))
+    const iat = new Date(Math.floor(this.jwt.now()))
+    const exp = new Date(Math.floor(this.jwt.now() + 300000 * 60))
 
     if (!('jti' in request)) {
         request['jti'] = uuidv4()
@@ -190,12 +189,12 @@ export default class MessagingService {
     device: string,
     ciphertext: Uint8Array
   ): Promise<Uint8Array> {
-    let builder = new flatbuffers.Builder(1024)
+    const builder = new flatbuffers.Builder(1024)
 
-    let rid = builder.createString(id)
-    let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
-    let rcp = builder.createString(`${selfid}:${device}`)
-    let ctx = message.Message.createCiphertextVector(
+    const rid = builder.createString(id)
+    const snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
+    const rcp = builder.createString(`${selfid}:${device}`)
+    const ctx = message.Message.createCiphertextVector(
       builder,
       Buffer.from(ciphertext)
     )
@@ -216,7 +215,7 @@ export default class MessagingService {
       )
     )
 
-    let msg = message.Message.endMessage(builder)
+    const msg = message.Message.endMessage(builder)
 
     builder.finish(msg)
 

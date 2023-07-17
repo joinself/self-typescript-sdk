@@ -71,12 +71,12 @@ export default class Requester {
     facts: Fact[],
     opts?: { cid?: string; exp?: number; async?: boolean, allowedFor?: number, auth?: boolean }
   ): Promise<FactResponse> {
-    let options = opts ? opts : {}
-    let as = options.async ? options.async : false
+    const options = opts ? opts : {}
+    const as = options.async ? options.async : false
 
     // Check if the current app still has credits
     if (this.jwt.checkPaidActions) {
-      let app = await this.is.app(this.jwt.appID)
+      const app = await this.is.app(this.jwt.appID)
       if (app.paid_actions == false) {
         throw new Error(
           'Your credits have expired, please log in to the developer portal and top up your account.'
@@ -84,31 +84,31 @@ export default class Requester {
       }
     }
 
-    let id = uuidv4()
+    const id = uuidv4()
 
     // Get user's device
-    let devices = await this.is.devices(selfid)
+    const devices = await this.is.devices(selfid)
 
-    let j = this.buildRequest(selfid, facts, opts)
-    let ciphertext = this.jwt.toSignedJson(j)
+    const j = this.buildRequest(selfid, facts, opts)
+    const ciphertext = this.jwt.toSignedJson(j)
 
-    var msgs = []
-    for (var i = 0; i < devices.length; i++) {
-      var msg = await this.buildEnvelope(id, selfid, devices[i], ciphertext)
+    const msgs = []
+    for (const device of devices) {
+      const msg = await this.buildEnvelope(id, selfid, device, ciphertext)
       msgs.push(msg)
     }
 
     if (as) {
       logger.debug('sending ' + id)
       this.ms.send(j.cid, { data: msgs, waitForResponse: false })
-      let res = new FactResponse()
-      res.status = '200'
 
-      return res
+      const response = new FactResponse()
+      response.status = '200'
+      return response
     }
 
     logger.debug(`requesting ${id}`)
-    let res = await this.ms.request(j.cid, id, msgs)
+    const res = await this.ms.request(j.cid, id, msgs)
     if ('errorMessage' in res) {
       throw new Error(res.errorMessage)
     }
@@ -122,17 +122,17 @@ export default class Requester {
     device: string,
     plaintext: string
   ): Promise<Uint8Array> {
-    let ciphertext = await this.crypto.encrypt(plaintext, [{
+    const ciphertext = await this.crypto.encrypt(plaintext, [{
       id: selfid,
-      device: device,
+      device,
     }])
 
-    let builder = new flatbuffers.Builder(1024)
+    const builder = new flatbuffers.Builder(1024)
 
-    let rid = builder.createString(id)
-    let snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
-    let rcp = builder.createString(`${selfid}:${device}`)
-    let ctx = message.Message.createCiphertextVector(
+    const rid = builder.createString(id)
+    const snd = builder.createString(`${this.jwt.appID}:${this.jwt.deviceID}`)
+    const rcp = builder.createString(`${selfid}:${device}`)
+    const ctx = message.Message.createCiphertextVector(
       builder,
       Buffer.from(ciphertext)
     )
@@ -152,7 +152,7 @@ export default class Requester {
       )
     )
 
-    let msg = message.Message.endMessage(builder)
+    const msg = message.Message.endMessage(builder)
 
     builder.finish(msg)
 
@@ -171,11 +171,11 @@ export default class Requester {
     facts: Fact[],
     opts?: { cid?: string; exp?: number; intermediary?: string, allowedFor?: number }
   ): Promise<FactResponse> {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
 
     // Check if the current app still has credits
     if (this.jwt.checkPaidActions) {
-      let app = await this.is.app(this.jwt.appID)
+      const app = await this.is.app(this.jwt.appID)
       if (app.paid_actions == false) {
         throw new Error(
           'Your credits have expired, please log in to the developer portal and top up your account.'
@@ -183,25 +183,25 @@ export default class Requester {
       }
     }
 
-    let id = uuidv4()
+    const id = uuidv4()
 
     // Get intermediary's device
-    let intermediary = options.intermediary ? options.intermediary : 'self_intermediary'
-    let devices = await this.is.devices(intermediary)
+    const intermediary = options.intermediary ? options.intermediary : 'self_intermediary'
+    const devices = await this.is.devices(intermediary)
     opts['aud'] = intermediary
 
-    let j = this.buildRequest(selfid, facts, opts)
-    let ciphertext = this.jwt.toSignedJson(j)
+    const j = this.buildRequest(selfid, facts, opts)
+    const ciphertext = this.jwt.toSignedJson(j)
 
     // Envelope
-    var msgs = []
-    for (var i = 0; i < devices.length; i++) {
-      var msg = await this.buildEnvelope(id, intermediary, devices[i], ciphertext)
+    const msgs = []
+    for (const device of devices) {
+      const msg = await this.buildEnvelope(id, intermediary, device, ciphertext)
       msgs.push(msg)
     }
 
     logger.debug(`requesting ${j.cid}`)
-    let res = await this.ms.request(j.cid, id, msgs)
+    const res = await this.ms.request(j.cid, id, msgs)
     if ('errorMessage' in res) {
       throw new Error(res.errorMessage)
     }
@@ -240,18 +240,18 @@ export default class Requester {
    * @param opts allows you specify optional parameters like the conversation id <cid>, the selfid or the expiration time.
    */
   generateQR(facts: Fact[], opts?: { selfid?: string; cid?: string; exp?: number }): Buffer {
-    let options = opts ? opts : {}
-    let selfid = options.selfid ? options.selfid : '-'
-    let body = this.jwt.toSignedJson(this.buildRequest(selfid, facts, options))
+    const options = opts ? opts : {}
+    const selfid = options.selfid ? options.selfid : '-'
+    const body = this.jwt.toSignedJson(this.buildRequest(selfid, facts, options))
 
-    let qr = new QRCode()
+    const qr = new QRCode()
     qr.setTypeNumber(20)
     qr.setErrorCorrectLevel(ErrorCorrectLevel.L)
     qr.addData(body)
     qr.make()
 
-    let data = qr.toDataURL(5).split(',')
-    let buf = Buffer.from(data[1], 'base64')
+    const data = qr.toDataURL(5).split(',')
+    const buf = Buffer.from(data[1], 'base64')
 
     return buf
   }
@@ -267,10 +267,10 @@ export default class Requester {
     facts: Fact[],
     opts?: { selfid?: string; cid?: string }
   ): string {
-    let options = opts ? opts : {}
-    let selfid = options.selfid ? options.selfid : '-'
-    let body = this.jwt.toSignedJson(this.buildRequest(selfid, facts, options))
-    let encodedBody = this.jwt.encode(body)
+    const options = opts ? opts : {}
+    const selfid = options.selfid ? options.selfid : '-'
+    const body = this.jwt.toSignedJson(this.buildRequest(selfid, facts, options))
+    const encodedBody = this.jwt.encode(body)
     return this.messagingService.buildDynamicLink(encodedBody, this.env, callback)
   }
 
@@ -281,36 +281,36 @@ export default class Requester {
    * @param opts optional parameters like conversation id or the expiration time
    */
   private buildRequest(selfid: string, facts: Fact[], opts?: { cid?: string; exp?: number, allowedFor?: number, auth?: boolean, aud?: string }): any {
-    let options = opts ? opts : {}
-    let cid = options.cid ? options.cid : uuidv4()
-    let expTimeout = options.exp ? options.exp : 300000
-    let aud = options.aud ? options.aud : selfid
+    const options = opts ? opts : {}
+    const cid = options.cid ? options.cid : uuidv4()
+    const expTimeout = options.exp ? options.exp : 300000
+    const aud = options.aud ? options.aud : selfid
 
-    for (var i = 0; i < facts.length; i++) {
-      if (!Fact.isValid(facts[i])) {
+    for (const fact of facts) {
+      if (!Fact.isValid(fact)) {
         throw new TypeError('invalid facts')
       }
     }
 
     // Calculate expirations
-    let iat = new Date(Math.floor(this.jwt.now()))
-    let exp = new Date(Math.floor(this.jwt.now() + expTimeout * 60))
+    const iat = new Date(Math.floor(this.jwt.now()))
+    const exp = new Date(Math.floor(this.jwt.now() + expTimeout * 60))
 
     // Ciphertext
-    let c = {
+    const c = {
       typ: 'identities.facts.query.req',
       iss: this.jwt.appID,
       sub: selfid,
-      aud: aud,
+      aud,
       iat: iat.toISOString(),
       exp: exp.toISOString(),
-      cid: cid,
+      cid,
       jti: uuidv4(),
-      facts: facts
+      facts
     }
 
     if ('allowedFor' in options) {
-      let au = new Date(Math.floor(this.jwt.now() + options.allowedFor * 60))
+      const au = new Date(Math.floor(this.jwt.now() + options.allowedFor * 60))
       c['allowed_until'] = au.toISOString()
     }
 

@@ -41,11 +41,11 @@ export default class AuthenticationService {
    * @param opts allows you specify optional parameters like the conversation id <cid> or async
    */
   async request(selfID: string, opts?: { cid?: string; async?: boolean }): Promise<AuthResponse> {
-    var facts: Fact[] = []
-    let options = opts ? opts : {}
+    const facts: Fact[] = []
+    const options = opts ? opts : {}
     options['auth'] = true
 
-    var res = await this.requester.request(selfID, facts, options)
+    const res = await this.requester.request(selfID, facts, options)
 
     return new AuthResponse(res.status === 'accepted', selfID)
   }
@@ -55,8 +55,8 @@ export default class AuthenticationService {
    * @param opts allows you specify optional parameters like the conversation id <cid> or the selfid
    */
   generateQR(opts?: { selfid?: string; cid?: string }): Buffer {
-    var facts: Fact[] = []
-    let options = opts ? opts : {}
+    const facts: Fact[] = []
+    const options = opts ? opts : {}
     options['auth'] = true
 
     return this.requester.generateQR(facts, options)
@@ -68,8 +68,8 @@ export default class AuthenticationService {
    * @param opts optional parameters like selfid or conversation id
    */
   generateDeepLink(callback: string, opts?: { selfid?: string; cid?: string }): string {
-    var facts: Fact[] = []
-    let options = opts ? opts : {}
+    const facts: Fact[] = []
+    const options = opts ? opts : {}
     options['auth'] = true
 
     return this.requester.generateDeepLink(callback, facts, options)

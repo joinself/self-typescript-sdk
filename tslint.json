@@ -1,10 +1,13 @@
 {
-  "extends": [
-    "tslint-config-standard",
-    "tslint-config-prettier"
-  ],
+  "extends": "tslint:recommended",
   "rules": {
     "no-duplicate-imports": [false],
+    "no-floating-promises": true,
+    "no-string-literal": false,
+    "triple-equals": false,
+    "max-classes-per-file": 2,
+    "forin": false,
+    "ban-types": false,
     "variable-name": [
       true,
       "allow-snake-case",

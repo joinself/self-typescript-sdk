@@ -39,9 +39,9 @@ export class ChatMessage {
   async processObjects() {
     if ('objects' in this.payload) {
       this.objects = []
-      for (var i = 0; i<this.payload.objects.length; i++) {
-        let fo = new FileObject(this.chat.is.jwt.authToken(), this.chat.is.url)
-        await fo.buildFromObject(this.payload.objects[i])
+      for (const obj of this.payload.objects) {
+        const fo = new FileObject(this.chat.is.jwt.authToken(), this.chat.is.url)
+        await fo.buildFromObject(obj)
         this.objects.push(fo)
       }
     }

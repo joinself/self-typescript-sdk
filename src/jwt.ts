@@ -6,7 +6,6 @@ import { logging } from './logging'
 import { SessionStorage } from './storage'
 import SQLiteStorage from './storage';
 
-const _sodium = require('libsodium-wrappers')
 const logger = logging.getLogger('core.self-sdk')
 
 export interface JwtInput {
@@ -41,10 +40,10 @@ export default class Jwt {
       checkPaidActions?: boolean,
       stateManager?: SessionStorage
     }): Promise<Jwt> {
-    let jwt = new Jwt()
+    const jwt = new Jwt()
     jwt.appID = appID
 
-    let appkeyParts = appKey.split(':')
+    const appkeyParts = appKey.split(':')
     jwt.appKeyID = appkeyParts[0]
     jwt.appKey = appkeyParts[1]
 
@@ -52,7 +51,7 @@ export default class Jwt {
     opts = opts ? opts : {}
 
     /* istanbul ignore next */
-    let ntp = 'ntp' in opts ? opts.ntp : true
+    const ntp = 'ntp' in opts ? opts.ntp : true
 
     if ('stateManager' in opts) {
       jwt.stateManager = opts.stateManager
@@ -70,6 +69,7 @@ export default class Jwt {
       jwt.checkPaidActions = opts.checkPaidActions
     }
 
+    const _sodium = require('libsodium-wrappers')
     /* istanbul ignore next */
     if (!ntp) {
       await Promise.all([_sodium.ready])
@@ -83,19 +83,19 @@ export default class Jwt {
 
     jwt.sodium = _sodium
 
-    let seed = jwt.sodium.from_base64(jwt.appKey, jwt.sodium.base64_variants.ORIGINAL_NO_PADDING)
+    const seed = jwt.sodium.from_base64(jwt.appKey, jwt.sodium.base64_variants.ORIGINAL_NO_PADDING)
     jwt.keypair = jwt.sodium.crypto_sign_seed_keypair(seed)
 
     return jwt
   }
 
   public authToken(): string {
-    let header = this.header()
-    let fiveSecs = 5 * 1000
-    let oneMinute = 1 * 60 * 1000
+    const header = this.header()
+    const fiveSecs = 5 * 1000
+    const oneMinute = 1 * 60 * 1000
 
-    let now = this.now()
-    let jsonBody = JSON.stringify({
+    const now = this.now()
+    const jsonBody = JSON.stringify({
       jti: uuidv4(),
       cid: uuidv4(),
       iat: Math.floor((now - fiveSecs) / 1000),
@@ -104,10 +104,10 @@ export default class Jwt {
       sub: this.appID,
       typ: 'auth.token'
     })
-    let body = this.encode(jsonBody)
+    const body = this.encode(jsonBody)
 
-    let payload = `${header}.${body}`
-    let signature = this.sign(payload)
+    const payload = `${header}.${body}`
+    const signature = this.sign(payload)
 
     return `${payload}.${signature}`
   }
@@ -121,32 +121,32 @@ export default class Jwt {
   }
 
   public toJWS(input: any) {
-    let jsonBody = JSON.stringify(input)
-    let body = this.encode(jsonBody)
+    const jsonBody = JSON.stringify(input)
+    const body = this.encode(jsonBody)
 
-    let payload = `${this.header()}.${body}`
-    let signature = this.sign(payload)
+    const payload = `${this.header()}.${body}`
+    const signature = this.sign(payload)
 
     return {
       payload: body,
       protected: this.header(),
-      signature: signature
+      signature
     }
   }
 
   public sign(input: string): string {
-    let signature = this.sodium.crypto_sign_detached(input, this.keypair.privateKey)
+    const signature = this.sodium.crypto_sign_detached(input, this.keypair.privateKey)
     return this.sodium.to_base64(signature, this.sodium.base64_variants.URLSAFE_NO_PADDING)
   }
 
   public verify(input: JwtInput, pk: any): boolean {
     try {
-      let msg = `${input.protected}.${input.payload}`
-      let sig = this.sodium.from_base64(
+      const msg = `${input.protected}.${input.payload}`
+      const sig = this.sodium.from_base64(
         input.signature,
         this.sodium.base64_variants.URLSAFE_NO_PADDING
       )
-      let key = this.sodium.from_base64(pk, this.sodium.base64_variants.URLSAFE_NO_PADDING)
+      const key = this.sodium.from_base64(pk, this.sodium.base64_variants.URLSAFE_NO_PADDING)
 
       return this.sodium.crypto_sign_verify_detached(sig, msg, key)
     } catch (error) {
@@ -174,7 +174,7 @@ export default class Jwt {
       .then(date => {
         this.diffDates = new Date().valueOf() - date.valueOf()
       })
-      .catch(err => console.error(err))
+      .catch(err => logger.warn(err))
   }
 
   private header() {

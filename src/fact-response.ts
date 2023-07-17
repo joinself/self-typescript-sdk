@@ -18,7 +18,7 @@ export default class FactResponse {
   facts: Fact[]
 
   public static async parse(input: any, jwt: Jwt, is: IdentityService): Promise<FactResponse> {
-    let r = new FactResponse()
+    const r = new FactResponse()
 
     r.jti = input.jti
     r.cid = input.cid
@@ -49,7 +49,7 @@ export default class FactResponse {
   }
 
   attestationsFor(name: string): Attestation[] {
-    let fact = this.fact(name)
+    const fact = this.fact(name)
     if (fact === undefined) {
       return []
     }
@@ -58,7 +58,7 @@ export default class FactResponse {
   }
 
   attestationValuesFor(name: string): string[] {
-    let att = []
+    const att = []
     for (const at of this.attestationsFor(name)) {
       att.push(at.value)
     }
