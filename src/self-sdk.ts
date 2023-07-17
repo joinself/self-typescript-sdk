@@ -13,7 +13,7 @@ import { logging, LogEntry, Logger } from './logging'
 import ChatService from './chat-service';
 import DocsService from './docs-service';
 import Requester from './requester';
-import { IOManager } from './storage';
+import { SessionStorage } from './storage';
 import VoiceService from './voice-service';
 
 /**
@@ -99,7 +99,7 @@ export default class SelfSDK {
       encryptionClient?: Crypto
       logLevel?: string,
       checkPaidActions?: boolean,
-      stateManager?: IOManager
+      stateManager?: SessionStorage
     }
   ): Promise<SelfSDK> {
     let options = opts ? opts : {}
@@ -117,7 +117,7 @@ export default class SelfSDK {
     appKey = keyCleanup(appKey)
     const sdk = new SelfSDK(appID, appKey, storageKey, opts)
     sdk.logger = logging.getLogger('core.self-sdk')
-    sdk.jwt = await Jwt.build(appID, appKey, opts)
+    sdk.jwt = await Jwt.build(appID, appKey, storageFolder, opts)
 
     storageFolder = `${storageFolder}/apps/${sdk.jwt.appID}/devices/${sdk.jwt.deviceID}`
     var shell = require('shelljs')
@@ -126,11 +126,12 @@ export default class SelfSDK {
     sdk.identityService = new IdentityService(sdk.jwt, sdk.baseURL)
     // Check the current app still exists
     await sdk.deviceStillExists()
+
     if (options['encryptionClient'] == undefined) {
       sdk.encryptionClient = await Crypto.build(
         sdk.identityService,
         sdk.jwt.deviceID,
-        `${storageFolder}/keys/${sdk.jwt.appKeyID}`,
+        sdk.jwt.stateManager,
         storageKey
       )
     } else {

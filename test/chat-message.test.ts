@@ -8,6 +8,7 @@ import MessagingService from '../src/messaging-service';
 import { WebSocket, Server } from 'mock-socket'
 import EncryptionMock from './mocks/encryption-mock'
 import { ChatMessage } from '../src/chat-message';
+import { FilesManager } from 'turbodepot-node';
 
 describe("chat-service", () => {
   let cs: ChatService
@@ -28,7 +29,9 @@ describe("chat-service", () => {
 
     let pk = 'UZXk4PSY6LN29R15jUVuDabsoH7VhFkVWGApA0IYLaY'
     let sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
-    jwt = await Jwt.build('appID', sk, { ntp: false })
+    let filesManager = new FilesManager();
+    let tmpFolder = await filesManager.createTempDirectory('chat-message');
+    jwt = await Jwt.build('appID', sk, tmpFolder, { ntp: false })
 
     let is = new IdentityService(jwt, 'https://api.joinself.com/')
 

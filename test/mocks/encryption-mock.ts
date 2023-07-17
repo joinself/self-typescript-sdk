@@ -3,6 +3,8 @@
 import IdentityService from '../../src/identity-service'
 import { Recipient } from '../../src/crypto';
 import { logging, Logger } from '../../src/logging'
+import SessionStorage, { txCallback } from '../../src/storage'
+import { Mutex } from 'async-mutex';
 
 export default class EncryptionMock {
   client: IdentityService
@@ -12,6 +14,8 @@ export default class EncryptionMock {
   path: string
   account: Account
   logger: Logger
+  storage: SessionStorage
+  mutex: Mutex
 
   public async encrypt(
     message: string,
@@ -34,4 +38,7 @@ export default class EncryptionMock {
 
   async getInboundSessionWithBob(message: Uint8Array, session_file_name: string): Promise<any> {}
   async getOutboundSessionWithBob(recipient, recipientDevice, session_file_name: string): Promise<any> {}
+  async tx(callback: txCallback) {}
 }
+
+

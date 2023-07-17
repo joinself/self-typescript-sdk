@@ -4,11 +4,11 @@ import Jwt from '../src/jwt'
 import IdentityService from '../src/identity-service'
 import Messaging from '../src/messaging'
 import MessagingService from '../src/messaging-service'
-import DocsService from '../src/docs-service';
 
 import { WebSocket, Server } from 'mock-socket'
 import EncryptionMock from './mocks/encryption-mock'
 import VoiceService from '../src/voice-service';
+import { FilesManager } from 'turbodepot-node';
 
 
 /**
@@ -25,7 +25,9 @@ describe('VoiceService', () => {
   beforeEach(async () => {
     let pk = 'UZXk4PSY6LN29R15jUVuDabsoH7VhFkVWGApA0IYLaY'
     let sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
-    jwt = await Jwt.build('appID', sk, { ntp: false })
+    let filesManager = new FilesManager();
+    let tmpFolder = await filesManager.createTempDirectory('voice-service');
+    jwt = await Jwt.build('appID', sk, tmpFolder, { ntp: false })
 
     let is = new IdentityService(jwt, 'https://api.joinself.com/')
 

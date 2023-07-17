@@ -10,6 +10,7 @@ import * as notification from './msgproto/notification'
 import * as mtype from './msgproto/msg-type'
 import Crypto from './crypto'
 import FactResponse from './fact-response'
+import SessionStorage from './storage'
 
 import * as fs from 'fs'
 import { openStdin } from 'process'
@@ -40,6 +41,7 @@ export default class Messaging {
   is: IdentityService
   offsetPath: string
   storageDir: string
+  storage: SessionStorage
   encryptionClient: Crypto
   logger: Logger
   started: boolean
@@ -58,13 +60,6 @@ export default class Messaging {
     this.connected = false
     this.is = is
     this.encryptionClient = ec
-    this.offsetPath = `${process.cwd()}/.self_storage`
-    if (opts) {
-      if ('storageDir' in opts) {
-        this.offsetPath = opts.storageDir
-      }
-    }
-    this.offsetPath = `${this.offsetPath}/${this.jwt.appID}:${this.jwt.deviceID}.offset`
     this.logger = logging.getLogger('core.self-sdk')
   }
 
@@ -110,7 +105,7 @@ export default class Messaging {
         return
       }
 
-      this.setOffset(offset)
+      await this.setOffset(offset)
       this.logger.debug(`received payload ${payload['payload']}`)
       let p = JSON.parse(Buffer.from(payload['payload'], 'base64').toString('utf8'))
       this.logger.debug(`processing ${p.typ}`)
@@ -268,7 +263,7 @@ export default class Messaging {
     auth.Auth.addMsgtype(builder, mtype.MsgType.AUTH)
     auth.Auth.addDevice(builder, did)
     auth.Auth.addToken(builder, tkn)
-    auth.Auth.addOffset(builder, flatbuffers.createLong(this.getOffset(), 0))
+    auth.Auth.addOffset(builder, flatbuffers.createLong(await this.getOffset(), 0))
     let authReq = auth.Auth.endAuth(builder)
 
     builder.finish(authReq)
@@ -399,23 +394,18 @@ export default class Messaging {
     this.callbacks.set(messageType, callback)
   }
 
-  private getOffset(): number {
-    try {
-      let offset = fs.readFileSync(this.offsetPath, { flag: 'r' })
-      return parseInt(offset.toString(), 10)
-    } catch (error) {
-      return 0
-    }
+  private async getOffset(): Promise<number> {
+    return await this.jwt.stateManager.getAccountOffset()
   }
 
-  private setOffset(offset: number) {
-    this.jwt.stateManager.write(this.offsetPath, offset.toString())
+  private async setOffset(offset: number) {
+    await this.jwt.stateManager.setAccountOffset(offset)
   }
 
   // hasSession checks if a session with a specific identifier and device has already been
   // initialised.
-  public hasSession(identifier: string, device: string): boolean {
-    let path = this.encryptionClient.sessionPath(identifier, device)
-    return this.jwt.stateManager.exists(path)
+  public async hasSession(identifier: string, device: string): Promise<boolean> {
+    let sid = this.jwt.stateManager.sid(identifier, device)
+    return await this.jwt.stateManager.sessionExists(sid)
   }
 }

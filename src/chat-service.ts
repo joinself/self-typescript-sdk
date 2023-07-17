@@ -296,7 +296,7 @@ export default class ChatService {
       if (posteriorMembers) {
         let devices = await this.is.devices(members[i])
         for (var j=0; j<devices.length; j++) {
-          if (!this.ms.ms.hasSession(members[i], devices[j])) {
+          if (!await this.ms.ms.hasSession(members[i], devices[j])) {
             var recipient = members[i] + ":" + devices[j]
             this.logger.debug(`sending sessions.create to ${recipient}`)
             requests.push(this.ms.send(recipient, {

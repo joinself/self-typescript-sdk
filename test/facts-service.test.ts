@@ -15,6 +15,7 @@ import EncryptionMock from './mocks/encryption-mock'
 import * as flatbuffers from 'flatbuffers'
 import Requester from '../src/requester';
 import { FactToIssue, Group } from '../src/facts-service';
+import { FilesManager } from 'turbodepot-node';
 
 /**
  * Attestation test
@@ -33,7 +34,10 @@ describe('FactsService', () => {
   beforeEach(async () => {
     let pk = 'UZXk4PSY6LN29R15jUVuDabsoH7VhFkVWGApA0IYLaY'
     let sk = '1:GVV4WqN6qQdfD7VQYV/VU7/9CTmWceXtSN4mykhzk7Q'
-    jwt = await Jwt.build('appID', sk, { ntp: false })
+
+    let filesManager = new FilesManager();
+    let tmpFolder = await filesManager.createTempDirectory('facts-service');
+    jwt = await Jwt.build('appID', sk, tmpFolder, { ntp: false })
     is = new IdentityService(jwt, 'https://api.joinself.com/')
     ec = new EncryptionMock()
     // ec = new Crypto(is, jwt.deviceID, '/tmp/', sk)
