@@ -94,17 +94,17 @@ export default class IdentityService {
    * @param kid key id
    */
   async publicKey(selfid: string, kid: string): Promise<string> {
-    let identity = await this.get(selfid)
-    let sg = await SignatureGraph.build(identity['history'])
-    let k = sg.keyByID(kid)
+    const identity = await this.get(selfid)
+    const sg = await SignatureGraph.build(identity['history'])
+    const k = sg.keyByID(kid)
 
     return k.rawPublicKey
   }
 
   async devicePublicKey(selfid: string, did: string): Promise<string> {
-    let identity = await this.get(selfid)
-    let sg = await SignatureGraph.build(identity['history'])
-    let k = sg.keyByDevice(did)
+    const identity = await this.get(selfid)
+    const sg = await SignatureGraph.build(identity['history'])
+    const k = sg.keyByDevice(did)
 
     return k.rawPublicKey
   }
@@ -114,7 +114,7 @@ export default class IdentityService {
    * @param selfid self identifier for the identity.
    */
   async get(selfid: string): Promise<Identity> {
-    return <Promise<Identity>>this.getIdentity(selfid, 'identities')
+    return this.getIdentity(selfid, 'identities') as Promise<Identity>
   }
 
   /**
@@ -122,7 +122,7 @@ export default class IdentityService {
    * @param selfid self identifier for the app.
    */
   async app(selfid: string): Promise<App> {
-    return <Promise<App>>this.getIdentity(selfid, 'apps')
+    return this.getIdentity(selfid, 'apps') as Promise<App>
   }
 
   private async getIdentity(selfid: string, typ: string): Promise<Identity | App> {
@@ -159,9 +159,9 @@ export default class IdentityService {
     try {
       const axios = require('axios').default
 
-      let res = await axios({
+      const res = await axios({
         method: 'post',
-        url: url,
+        url,
         data: body,
         headers: { Authorization: `Bearer ${this.jwt.authToken()}` }
       })
@@ -176,9 +176,9 @@ export default class IdentityService {
     try {
       const axios = require('axios').default
 
-      let res = await axios({
+      const res = await axios({
         method: 'get',
-        url: url,
+        url,
         headers: { Authorization: `Bearer ${this.jwt.authToken()}` }
       })
       return res

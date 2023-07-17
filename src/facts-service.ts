@@ -35,7 +35,7 @@ export default class FactsService {
     facts: Fact[],
     opts?: { cid?: string; exp?: number; async?: boolean, allowedFor?: number, auth?: boolean }
   ): Promise<FactResponse> {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
     options['auth'] = false
 
     return this.requester.request(selfID, facts, options)
@@ -53,7 +53,7 @@ export default class FactsService {
     facts: Fact[],
     opts?: { cid?: string; exp?: number; intermediary?: string, allowedFor?: number }
   ): Promise<FactResponse> {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
     options['auth'] = false
 
     return this.requester.requestViaIntermediary(selfID, facts, options)
@@ -74,7 +74,7 @@ export default class FactsService {
    * @param opts allows you specify optional parameters like the conversation id <cid>, the selfid or the expiration time.
    */
   generateQR(facts: Fact[], opts?: { selfid?: string; cid?: string; exp?: number }): Buffer {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
     options['auth'] = true
 
     return this.requester.generateQR(facts, options)
@@ -91,7 +91,7 @@ export default class FactsService {
     facts: Fact[],
     opts?: { selfid?: string; cid?: string }
   ): string {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
     options['auth'] = true
 
     return this.requester.generateDeepLink(callback, facts, options)
@@ -103,18 +103,18 @@ export default class FactsService {
    * @param facts list of facts to be issued
    * @param opts optional parameters like the list of viewers of the fact
    */
-  async issue(selfid: string, facts: FactToIssue[], opts?: { viewers?: String[]}) {
-    let id = uuidv4()
+  async issue(selfid: string, facts: FactToIssue[], opts?: { viewers?: string[]}) {
+    const id = uuidv4()
 
     // Get user's device
-    let devices = await this.requester.is.devices(selfid)
+    const devices = await this.requester.is.devices(selfid)
 
-    let c = this.buildIssueRequest(selfid, facts, opts)
-    let ciphertext = this.requester.jwt.toSignedJson(c)
+    const c = this.buildIssueRequest(selfid, facts, opts)
+    const ciphertext = this.requester.jwt.toSignedJson(c)
 
-    var msgs = []
-    for (var i = 0; i < devices.length; i++) {
-      var msg = await this.requester.buildEnvelope(id, selfid, devices[i], ciphertext)
+    const msgs = []
+    for (const device of devices) {
+      const msg = await this.requester.buildEnvelope(id, selfid, device, ciphertext)
       msgs.push(msg)
     }
 
@@ -122,41 +122,41 @@ export default class FactsService {
     this.requester.ms.send(c.cid, { data: msgs, waitForResponse: false })
   }
 
-  private buildIssueRequest(selfid: string, facts: FactToIssue[], opts?: { cid?: string, exp?: number, viewers?: String[]}): {[k: string]: any} {
-    let options = opts ? opts : {}
-    let cid = options.cid ? options.cid : uuidv4()
-    let expTimeout = options.exp ? options.exp : 300000
+  private buildIssueRequest(selfid: string, facts: FactToIssue[], opts?: { cid?: string, exp?: number, viewers?: string[]}): {[k: string]: any} {
+    const options = opts ? opts : {}
+    const cid = options.cid ? options.cid : uuidv4()
+    const expTimeout = options.exp ? options.exp : 300000
 
     // Calculate expirations
-    let iat = new Date(Math.floor(this.requester.jwt.now()))
-    let exp = new Date(Math.floor(this.requester.jwt.now() + expTimeout * 60))
+    const iat = new Date(Math.floor(this.requester.jwt.now()))
+    const exp = new Date(Math.floor(this.requester.jwt.now() + expTimeout * 60))
 
-    var attestations = []
-    for(var i = 0; i < facts.length; i++) {
-      let f = { jti: uuidv4(),
+    const attestations = []
+    for (const fact of facts){
+      const f = { jti: uuidv4(),
         sub: selfid,
         iss: this.requester.jwt.appID,
         iat: iat.toISOString(),
         exp: exp.toISOString(),
-        source: facts[i]['source'],
+        source: fact['source'],
         verified: true,
-        facts: [ facts[i] ] }
+        facts: [ fact ] }
 
       attestations.push(this.requester.jwt.toJWS(f))
     }
 
     // Ciphertext
-    var c: {[k: string]: any} = {
+    const c: {[k: string]: any} = {
       typ: 'identities.facts.issue',
       iss: this.requester.jwt.appID,
       sub: selfid,
       aud: selfid,
       iat: iat.toISOString(),
       exp: exp.toISOString(),
-      cid: cid,
+      cid,
       jti: uuidv4(),
       status: 'verified',
-      attestations: attestations
+      attestations
     }
 
     if(options.viewers) {
@@ -178,7 +178,7 @@ export class FactToIssue {
   type?: string
 
   constructor(key: string, value: string, source: string, opts?: {group?: Group, type?: string}) {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
 
     this.key = key
     this.value = value
@@ -217,7 +217,7 @@ export class Delegation {
   description: string
 
   constructor(subjects: string[], actions: string[], effect: string, resources: string[], opts?: {conditions?: string[], description?: string}) {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
 
     this.subjects = subjects
     this.actions = actions
@@ -232,7 +232,7 @@ export class Delegation {
   }
 
   encode():string {
-    let cert = JSON.stringify({
+    const cert = JSON.stringify({
       subjects: this.subjects,
       actions: this.actions,
       effect: this.effect,
@@ -246,7 +246,7 @@ export class Delegation {
 
   static parse(input: string) {
 
-    let b = JSON.parse(Buffer.from(input, 'base64').toString())
+    const b = JSON.parse(Buffer.from(input, 'base64').toString())
     return new Delegation(
       b.subjects,
       b.actions,

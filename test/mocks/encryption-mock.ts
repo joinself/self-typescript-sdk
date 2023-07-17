@@ -12,7 +12,6 @@ export default class EncryptionMock {
   storageKey: string
   storageFolder: string
   path: string
-  account: Account
   logger: Logger
   storage: SessionStorage
   mutex: Mutex

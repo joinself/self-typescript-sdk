@@ -20,7 +20,7 @@ export interface SessionStorage {
   sid(self_id:string, device: string): string
 }
 
-export interface txCallback { (): void }
+export type txCallback = () => void
 
 export default class SQLiteStorage {
   appID: string
@@ -43,19 +43,19 @@ export default class SQLiteStorage {
     await this.createAccountsTable()
     await this.createSessionsTable()
 
-    //TODO: add the migration stuff ...
+    // TODO: add the migration stuff ...
     const migrator = new FileToSQLiteStorageMigrator(this.db, this.storageFolder, this.appID)
     await migrator.migrate()
   }
 
   public async tx(callback: txCallback) {
     try {
-      var sql = "BEGIN TRANSACTION;"
-      await this.db.exec(sql); //useTransaction = false
+      const sql = "BEGIN TRANSACTION;"
+      await this.db.exec(sql); // useTransaction = false
       await callback()
-      await this.db.exec('COMMIT TRANSACTION;'); //useTransaction = false
+      await this.db.exec('COMMIT TRANSACTION;'); // useTransaction = false
     } catch (e) {
-      await this.db.exec('ROLLBACK TRANSACTION;'); //useTransaction = false
+      await this.db.exec('ROLLBACK TRANSACTION;'); // useTransaction = false
     }
   }
   public async accountExists(): Promise<boolean> {
@@ -113,7 +113,7 @@ export default class SQLiteStorage {
   }
 
   public async createSession(sid: string, olm: string) {
-    let res = await this.db.run(
+    const res = await this.db.run(
       'INSERT INTO sessions (as_identifier, with_identifier, olm_session) VALUES (?, ?, ?);',
       this.appID,
       sid,
@@ -122,7 +122,7 @@ export default class SQLiteStorage {
   }
 
   public async updateSession(sid: string, olm: string) {
-    let row = await this.db.get('SELECT olm_session FROM sessions WHERE as_identifier = ? AND with_identifier = ?;', [this.appID, sid]);
+    const row = await this.db.get('SELECT olm_session FROM sessions WHERE as_identifier = ? AND with_identifier = ?;', [this.appID, sid]);
     if (!row) {
       await this.createSession(sid, olm);
     } else {
@@ -285,7 +285,7 @@ class FileToSQLiteStorageMigrator {
 
   private async persistAccounts(accounts: Map<string, Account>) {
     try {
-      await this.db.exec('BEGIN TRANSACTION;'); //useTransaction = false
+      await this.db.exec('BEGIN TRANSACTION;'); // useTransaction = false
 
       for (const [inbox_id, account] of Object.entries(accounts)) {
         await this.db.run(
@@ -302,9 +302,9 @@ class FileToSQLiteStorageMigrator {
         }
       }
 
-      await this.db.exec('COMMIT TRANSACTION;'); //useTransaction = false
+      await this.db.exec('COMMIT TRANSACTION;'); // useTransaction = false
     } catch (e) {
-      await this.db.exec('ROLLBACK TRANSACTION;'); //useTransaction = false
+      await this.db.exec('ROLLBACK TRANSACTION;'); // useTransaction = false
     }
   }
 

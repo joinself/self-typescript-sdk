@@ -1,8 +1,5 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
-
 import { logging, Logger } from './logging'
-
-const axios = require('axios').default;
 
 /**
  * FileObject represents an object (image or file) shared through messaging.
@@ -50,10 +47,10 @@ export class FileObject {
     await this._sodium.ready;
 
     // Encrypt the message
-    let obj = this.encryptObject(data)
+    const obj = this.encryptObject(data)
 
     // Push the encrypted message
-    let remoteObject = await this.fi.postObject(obj.ciphertext)
+    const remoteObject = await this.fi.postObject(obj.ciphertext)
 
     this.link = `${this.url}/v1/objects/${remoteObject.id}`,
     this.key = obj.key
@@ -72,12 +69,12 @@ export class FileObject {
   async buildFromObject(input: any): Promise<FileObject> {
     await this._sodium.ready;
 
-    let response = await this.fi.getRemoteFileContents(input['link'], input['expires'])
+    const response = await this.fi.getRemoteFileContents(input['link'], input['expires'])
     let buf = response.contents
 
     if ('key' in input) {
-      let keyDetails = this.extractShareableKey(input['key'])
-      let dt = this._sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+      const keyDetails = this.extractShareableKey(input['key'])
+      const dt = this._sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
         null,
         buf,
         null,
@@ -111,9 +108,9 @@ export class FileObject {
   }
 
   private encryptObject(plaintext: string|Uint8Array) {
-    let key = this._sodium.crypto_aead_xchacha20poly1305_ietf_keygen();
-    let pNonce = this._sodium.randombytes_buf(this._sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-    let ct = this._sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+    const key = this._sodium.crypto_aead_xchacha20poly1305_ietf_keygen();
+    const pNonce = this._sodium.randombytes_buf(this._sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    const ct = this._sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
       plaintext,
       null,
       null,
@@ -130,7 +127,7 @@ export class FileObject {
    * @returns
    */
   private extractShareableKey(key: any): any {
-    let s = this._sodium.from_base64(key, this._sodium.base64_variants.URLSAFE_NO_PADDING)
+    const s = this._sodium.from_base64(key, this._sodium.base64_variants.URLSAFE_NO_PADDING)
     return { key: s.slice(0, 32), nonce: s.slice(32) }
   }
 
@@ -141,7 +138,7 @@ export class FileObject {
    * @returns
    */
    private buildShareableKey(key: any, nonce: any): any {
-    var composedKey = new Uint8Array(key.byteLength + nonce.byteLength);
+    const composedKey = new Uint8Array(key.byteLength + nonce.byteLength);
     composedKey.set(key, 0);
     composedKey.set(nonce, key.byteLength);
 
@@ -178,6 +175,7 @@ export class RemoteFileInteractor {
 
     if (!this.isExpired(expires)) {
       try {
+        const axios = require('axios').default;
         const response = await axios({
           method: 'GET',
           url: link,
@@ -209,14 +207,14 @@ export class RemoteFileInteractor {
    * @returns
    */
    public async postObject(data:any):Promise<any> {
-    let url = `${this.url}/v1/objects`
+    const url = `${this.url}/v1/objects`
 
     try {
       const axios = require('axios').default
-      let res = await axios({
+      const res = await axios({
         method: 'post',
-        url: url,
-        data: data,
+        url,
+        data,
         headers: {
           Authorization: `Bearer ${this.token}`,
           "Content-Type": "application/octet-stream"
@@ -230,7 +228,7 @@ export class RemoteFileInteractor {
 
   private isExpired(expires:number|undefined): boolean {
     if (expires == undefined) return true
-    let now = Math.round(new Date().valueOf()/1000)
+    const now = Math.round(new Date().valueOf()/1000)
     return (expires < now)
   }
 

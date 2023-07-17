@@ -18,9 +18,9 @@ export default class VoiceService {
    * @param cid
    */
   async setup(recipient: string, name: string, cid: string) {
-    var payload = { typ: "chat.voice.setup" }
+    const payload = { typ: "chat.voice.setup" }
     payload['cid'] = cid
-    payload['data'] = { name: name }
+    payload['data'] = { name }
 
     await this.ms.send([recipient], payload)
   }
@@ -45,7 +45,7 @@ export default class VoiceService {
    * @param data
    */
   async start(recipient: string, cid: string, call_id: string, peer_info: string, data: any) {
-    var payload = { typ: "chat.voice.start" }
+    const payload = { typ: "chat.voice.start" }
     payload['cid'] = cid
     payload['call_id'] = call_id
     payload['peer_info'] = peer_info
@@ -74,7 +74,7 @@ export default class VoiceService {
    * @param data
    */
   async accept(recipient: string, cid: string, call_id: string, peer_info: string, data: any) {
-    var payload = { typ: "chat.voice.accept" }
+    const payload = { typ: "chat.voice.accept" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id
@@ -102,7 +102,7 @@ export default class VoiceService {
    * @param call_id
    */
   async stop(recipient: string, cid: string, call_id: string) {
-    var payload = { typ: "chat.voice.stop" }
+    const payload = { typ: "chat.voice.stop" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id
@@ -128,7 +128,7 @@ export default class VoiceService {
    * @param call_id
    */
   async busy(recipient: string, cid: string, call_id: string) {
-    var payload = { typ: "chat.voice.busy" }
+    const payload = { typ: "chat.voice.busy" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id
@@ -154,7 +154,7 @@ export default class VoiceService {
    * @param call_id
    */
   async summary(recipient: string, cid: string, call_id: string) {
-    var payload = { typ: "chat.voice.summary" }
+    const payload = { typ: "chat.voice.summary" }
     payload['cid'] = cid
     payload['cid'] = cid
     payload['call_id'] = call_id

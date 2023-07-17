@@ -21,7 +21,7 @@
     "node": ">=6.0.0"
   },
   "scripts": {
-    "lint": "tslint --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "lint": "tslint --project tsconfig.json -c tslint.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
     "prebuild": "rimraf dist",
     "transpile": "tsc --module commonjs",
     "roll": "rollup -c rollup.config.ts",

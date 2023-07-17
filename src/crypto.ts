@@ -33,7 +33,7 @@ export default class Crypto {
     storage: SessionStorage,
     storageKey: string
   ): Promise<Crypto> {
-    let cc = new Crypto(client, device, storage, storageKey)
+    const cc = new Crypto(client, device, storage, storageKey)
     const crypto = require('self-crypto')
 
     await storage.tx(async () => {
@@ -48,14 +48,14 @@ export default class Crypto {
         crypto.create_account_one_time_keys(cc.account, 100)
 
         // 1b-iii) convert those keys to json
-        let oneTimeKeys = JSON.parse(crypto.one_time_keys(cc.account))
+        const oneTimeKeys = JSON.parse(crypto.one_time_keys(cc.account))
 
-        let keys = Object.keys(oneTimeKeys['curve25519']).map(function(id) {
-          return { id: id, key: oneTimeKeys['curve25519'][id] }
+        const keys = Object.keys(oneTimeKeys['curve25519']).map((id) => {
+          return { id, key: oneTimeKeys['curve25519'][id] }
         })
 
         // 1b-iv) post those keys to POST /v1/identities/<selfid>/devices/1/pre_keys/
-        let res = await cc.client.postRaw(
+        const res = await cc.client.postRaw(
           `${cc.client.url}/v1/identities/${cc.client.jwt.appID}/devices/${cc.client.jwt.deviceID}/pre_keys`,
           keys
         )
@@ -64,7 +64,7 @@ export default class Crypto {
         }
 
         // 1b-v) store the account to a file
-        let pickle = crypto.pickle_account(cc.account, cc.storageKey)
+        const pickle = crypto.pickle_account(cc.account, cc.storageKey)
         await storage.createAccount(pickle)
       }
     })
@@ -78,30 +78,30 @@ export default class Crypto {
 
     // create a group session and set the identity of the account youre using
     this.logger.debug('create a group session and set the identity of the account youre using')
-    let group_session = crypto.create_group_session(
+    const group_session = crypto.create_group_session(
       `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
     )
 
     let ciphertext: Uint8Array
     await this.tx(async () => {
-      let sessions = {}
+      const sessions = {}
       this.logger.debug('managing sessions with all recipients')
-      for (var i = 0; i < recipients.length; i++) {
-        let sid = this.storage.sid(recipients[i].id, recipients[i].device)
+      for (const recipient of recipients) {
+        const sid = this.storage.sid(recipient.id, recipient.device)
         if (sid == this.storage.appID) continue
 
         let session_with_bob = null
         try {
-          let sOlm = await this.storage.getSessionOlm(sid)
-          session_with_bob = await this.getOutboundSessionWithBob(recipients[i].id, recipients[i].device, sOlm)
+          const sOlm = await this.storage.getSessionOlm(sid)
+          session_with_bob = await this.getOutboundSessionWithBob(recipient.id, recipient.device, sOlm)
         } catch (error) {
-          this.logger.warn(`  there is a problem adding group participant ${recipients[i].id}:${recipients[i].device}, skipping...`)
+          this.logger.warn(`  there is a problem adding group participant ${recipient.id}:${recipient.device}, skipping...`)
           this.logger.warn(error)
           continue
         }
 
-        this.logger.debug(`  adding group participant ${recipients[i].id}:${recipients[i].device}`)
-        crypto.add_group_participant(group_session, `${recipients[i].id}:${recipients[i].device}`, session_with_bob)
+        this.logger.debug(`  adding group participant ${recipient.id}:${recipient.device}`)
+        crypto.add_group_participant(group_session, `${recipient.id}:${recipient.device}`, session_with_bob)
         sessions[sid] = session_with_bob
       }
 
@@ -112,7 +112,7 @@ export default class Crypto {
       // 6) store the sessions to a file
       this.logger.debug('storing sessions')
       for (const sid in sessions) {
-        let pickle = crypto.pickle_session(sessions[sid], this.storageKey)
+        const pickle = crypto.pickle_session(sessions[sid], this.storageKey)
         await this.storage.updateSession(sid, pickle)
       }
     })
@@ -127,13 +127,13 @@ export default class Crypto {
 
     await this.tx(async () => {
       this.logger.debug('loadding sessions')
-      let sid = this.storage.sid(sender, sender_device)
-      let sOlm = await this.storage.getSessionOlm(sid)
-      let session_with_bob = await this.getInboundSessionWithBob(message, sOlm)
+      const sid = this.storage.sid(sender, sender_device)
+      const sOlm = await this.storage.getSessionOlm(sid)
+      const session_with_bob = await this.getInboundSessionWithBob(message, sOlm)
 
       // 8) create a group session and set the identity of the account you're using
       this.logger.debug(`create a group session and set the identity of the account ${this.client.jwt.appID}:${this.client.jwt.deviceID}`)
-      let group_session = crypto.create_group_session(
+      const group_session = crypto.create_group_session(
         `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
       )
 
@@ -147,7 +147,7 @@ export default class Crypto {
 
       // 11) store the session to a file
       this.logger.debug(`store the session to a file`)
-      let pickle = crypto.pickle_session(session_with_bob, this.storageKey)
+      const pickle = crypto.pickle_session(session_with_bob, this.storageKey)
       await this.storage.updateSession(sid, pickle)
     })
 
@@ -161,10 +161,10 @@ export default class Crypto {
     let session_with_bob: any
     this.logger.debug(`getting inbound session wit bob`)
 
-    let group_message_json = JSON.parse(Buffer.from(message).toString())
-    let myID = `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
-    let mtype = group_message_json['recipients'][myID]['mtype']
-    let ciphertext = group_message_json['recipients'][myID]['ciphertext']
+    const group_message_json = JSON.parse(Buffer.from(message).toString())
+    const myID = `${this.client.jwt.appID}:${this.client.jwt.deviceID}`
+    const mtype = group_message_json['recipients'][myID]['mtype']
+    const ciphertext = group_message_json['recipients'][myID]['ciphertext']
 
     if (pickle != null && pickle != undefined) {
       // 7a) if carol's session file exists load the pickle from the file
@@ -190,19 +190,17 @@ export default class Crypto {
         crypto.remove_one_time_keys(this.account, session_with_bob)
 
         // 7d-i) publish new prekeys if the amount of remaining keys has fallen below a threshold
-        let currentOneTimeKeys = JSON.parse(crypto.one_time_keys(this.account))
+        const currentOneTimeKeys = JSON.parse(crypto.one_time_keys(this.account))
 
         if (Object.keys(currentOneTimeKeys['curve25519']).length < 10) {
           this.logger.debug(` generate new prekeys as the amount of remaining keys has fallen below a threshold`)
           // 7d-ii) generate some keys for alice and publish them
           crypto.create_account_one_time_keys(this.account, 100)
 
-          let oneTimeKeys = JSON.parse(crypto.one_time_keys(this.account))
-
-          let keys: Array<any>
-
-          for (var i = 0; i < oneTimeKeys['curve25519']; i++) {
-            let kid = oneTimeKeys['curve25519'][i]
+          const oneTimeKeys = JSON.parse(crypto.one_time_keys(this.account))
+          const keys: any[] = []
+          for (let i = 0; i < oneTimeKeys['curve25519']; i++) {
+            const kid = oneTimeKeys['curve25519'][i]
             if (!(kid in currentOneTimeKeys)) {
               keys.push({ id: kid, key: oneTimeKeys['curve25519'][kid] })
             }
@@ -211,7 +209,7 @@ export default class Crypto {
           // 7d-iii) post those keys to POST /v1/identities/<selfid>/devices/1/pre_keys/
           this.logger.debug(` publish new prekeys if the amount of remaining keys has fallen below a threshold`)
           while(true) {
-            let status = await this.client.postRaw(
+            const status = await this.client.postRaw(
               `${this.client.url}/v1/identities/${this.client.jwt.appID}/devices/${this.client.jwt.deviceID}/pre_keys`,
               keys
             )
@@ -222,9 +220,9 @@ export default class Crypto {
 
         this.logger.debug(` publish new prekeys if the amount of remaining keys has fallen below a threshold`)
         // 7e-i) save the account state
-        let account_pickle = crypto.pickle_account(this.account, this.storageKey)
+        const account_pickle = crypto.pickle_account(this.account, this.storageKey)
 
-        this.storage.updateAccount(account_pickle)
+        await this.storage.updateAccount(account_pickle)
       }
 
       return session_with_bob
@@ -244,10 +242,10 @@ export default class Crypto {
       this.logger.debug(`  get bob's prekeys`)
       // 2b-i) if you have not previously sent or recevied a message to/from bob,
       //       you must get his identity key from GET /v1/identities/bob/
-      let ed25519_identity_key = await this.client.devicePublicKey(recipient, recipientDevice)
+      const ed25519_identity_key = await this.client.devicePublicKey(recipient, recipientDevice)
 
       // 2b-ii) get a one time key for bob
-      let getRes = await this.client.getRaw(
+      const getRes = await this.client.getRaw(
         `${this.client.url}/v1/identities/${recipient}/devices/${recipientDevice}/pre_keys`
       )
 
@@ -255,10 +253,10 @@ export default class Crypto {
         throw new Error('could not get identity pre_keys')
       }
 
-      let one_time_key = getRes.data['key']
+      const one_time_key = getRes.data['key']
 
       // 2b-iii) convert bobs ed25519 identity key to a curve25519 key
-      let curve25519_identity_key = crypto.ed25519_pk_to_curve25519(ed25519_identity_key)
+      const curve25519_identity_key = crypto.ed25519_pk_to_curve25519(ed25519_identity_key)
 
       // 2b-iv) create the session with bob
       session_with_bob = crypto.create_outbound_session(

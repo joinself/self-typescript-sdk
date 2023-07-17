@@ -22,7 +22,7 @@ import { logging, Logger } from './logging'
 const defaultRequestTimeout = 120000
 
 export interface Request {
-  data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView | Array<string>
+  data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView | string[]
   uuid?: string
   acknowledged?: boolean
   waitForResponse?: boolean
@@ -70,7 +70,7 @@ export default class Messaging {
     ec: Crypto,
     opts?: { storageDir?: string }
   ): Messaging {
-    let ms = new Messaging(url, jwt, is, ec, opts)
+    const ms = new Messaging(url, jwt, is, ec, opts)
 
     return ms
   }
@@ -89,15 +89,15 @@ export default class Messaging {
 
   private async processIncommingMessage(ciphertext: Uint8Array, offset: number, sender: string) {
     try {
-      let issuer = sender.split(':')
+      const issuer = sender.split(':')
 
-      let plaintext = await this.encryptionClient.decrypt(ciphertext, issuer[0], issuer[1])
-      let payload = JSON.parse(plaintext)
+      const plaintext = await this.encryptionClient.decrypt(ciphertext, issuer[0], issuer[1])
+      const payload = JSON.parse(plaintext)
       this.logger.debug(`decoding ${plaintext}`)
 
       const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
-      let header = JSON.parse(decode(payload['protected']))
-      let k = await this.is.publicKey(issuer[0], header['kid'])
+      const h = JSON.parse(decode(payload['protected']))
+      const k = await this.is.publicKey(issuer[0], h['kid'])
 
       this.logger.debug(`verifying message signature`)
       if (!this.jwt.verify(payload, k)) {
@@ -107,7 +107,7 @@ export default class Messaging {
 
       await this.setOffset(offset)
       this.logger.debug(`received payload ${payload['payload']}`)
-      let p = JSON.parse(Buffer.from(payload['payload'], 'base64').toString('utf8'))
+      const p = JSON.parse(Buffer.from(payload['payload'], 'base64').toString('utf8'))
       this.logger.debug(`processing ${p.typ}`)
       switch (p.typ) {
         case 'identities.facts.query.resp': {
@@ -124,7 +124,7 @@ export default class Messaging {
         }
         default: {
           if (this.callbacks.has(p.typ)) {
-            let fn = this.callbacks.get(p.typ)
+            const fn = this.callbacks.get(p.typ)
             fn(p)
           } else {
             this.logger.debug(`no callbacks setup ${p.typ}`)
@@ -138,15 +138,15 @@ export default class Messaging {
   }
 
   private async processResponse(payload: any, typ: string, input: string) {
-    let res = await this.buildResponse(payload, input)
+    const res = await this.buildResponse(payload, input)
 
     if (this.requests.has(payload.cid)) {
-      let r = this.requests.get(payload.cid)
+      const r = this.requests.get(payload.cid)
       r.response = res
       r.responded = true
       this.requests.set(payload.cid, r)
     } else if (this.callbacks.has(typ)) {
-      let fn = this.callbacks.get(typ)
+      const fn = this.callbacks.get(typ)
       fn(res)
     }
   }
@@ -170,13 +170,13 @@ export default class Messaging {
     this.logger.debug(`received ${hdr.id()} (${hdr.msgtype()})`)
     switch (hdr.msgtype()) {
       case mtype.MsgType.ERR: {
-        let buf = new flatbuffers.ByteBuffer(data)
-        let ntf = notification.Notification.getRootAsNotification(buf);
+        const buf = new flatbuffers.ByteBuffer(data)
+        const ntf = notification.Notification.getRootAsNotification(buf);
 
         let sw = 0
         Array.from(this.requests.keys()).forEach(key => {
           if (this.requests.get(key).uuid == ntf.id()) {
-            let r = this.requests.get(key)
+            const r = this.requests.get(key)
             r.response = { errorMessage: ntf.error() }
             r.acknowledged = true
             r.responded = true
@@ -198,8 +198,8 @@ export default class Messaging {
         break
       }
       case mtype.MsgType.MSG: {
-        let buf = new flatbuffers.ByteBuffer(data)
-        let msg = message.Message.getRootAsMessage(buf);
+        const buf = new flatbuffers.ByteBuffer(data)
+        const msg = message.Message.getRootAsMessage(buf);
         this.logger.debug(`message "${hdr.id()}" received from ${msg.sender()}`)
 
         await this.processIncommingMessage(
@@ -242,21 +242,21 @@ export default class Messaging {
     }
 
     this.ws.onmessage = async event => {
-      let buf = new flatbuffers.ByteBuffer(event.data)
-      let hdr = header.Header.getRootAsHeader(buf)
+      const buf = new flatbuffers.ByteBuffer(event.data)
+      const hdr = header.Header.getRootAsHeader(buf)
       await this.onmessage(hdr, event.data)
     }
   }
 
   private async authenticate() {
-    let id = uuidv4()
-    let token = this.jwt.authToken()
+    const id = uuidv4()
+    const token = this.jwt.authToken()
 
-    let builder = new flatbuffers.Builder(1024)
+    const builder = new flatbuffers.Builder(1024)
 
-    let rid = builder.createString(id)
-    let tkn = builder.createString(token)
-    let did = builder.createString(this.jwt.deviceID)
+    const rid = builder.createString(id)
+    const tkn = builder.createString(token)
+    const did = builder.createString(this.jwt.deviceID)
 
     auth.Auth.startAuth(builder)
     auth.Auth.addId(builder, rid)
@@ -264,11 +264,11 @@ export default class Messaging {
     auth.Auth.addDevice(builder, did)
     auth.Auth.addToken(builder, tkn)
     auth.Auth.addOffset(builder, flatbuffers.createLong(await this.getOffset(), 0))
-    let authReq = auth.Auth.endAuth(builder)
+    const authReq = auth.Auth.endAuth(builder)
 
     builder.finish(authReq)
 
-    let buf = builder.asUint8Array()
+    const buf = builder.asUint8Array()
 
     await this.send_and_wait(id, {
       data: buf,
@@ -297,11 +297,11 @@ export default class Messaging {
   async request(
     id: string,
     uuid: string,
-    data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView | Array<string>
+    data: string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView | string[]
   ): Promise<any> {
     return this.send_and_wait(id, {
-      data: data,
-      uuid: uuid,
+      data,
+      uuid,
       waitForResponse: true
     })
   }
@@ -310,8 +310,8 @@ export default class Messaging {
     if (!Array.isArray(request.data)) {
       this.ws.send(request.data)
     } else {
-      for (var i = 0; i < request.data.length; i++) {
-        this.ws.send(request.data[i])
+      for (const data of request.data) {
+        this.ws.send(data)
       }
     }
 
@@ -338,7 +338,7 @@ export default class Messaging {
   private wait_for_ack(id: string): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
       while (this.requests.has(id)) {
-        let req = this.requests.get(id)
+        const req = this.requests.get(id)
         if (req && req.acknowledged) {
           resolve(true)
           break
@@ -353,7 +353,7 @@ export default class Messaging {
     this.logger.debug(`waiting for response ${id}`)
     return new Promise(async (resolve, reject) => {
       while (this.requests.has(id)) {
-        let req = this.requests.get(id)
+        const req = this.requests.get(id)
         if (req && req.timeout <= Date.now()) {
           resolve(undefined)
           break
@@ -379,7 +379,7 @@ export default class Messaging {
   }
 
   private mark_as_acknowledged(id: string) {
-    let req = this.requests.get(id)
+    const req = this.requests.get(id)
     if (req) {
       req.acknowledged = true
       this.requests.set(id, req)
@@ -405,7 +405,7 @@ export default class Messaging {
   // hasSession checks if a session with a specific identifier and device has already been
   // initialised.
   public async hasSession(identifier: string, device: string): Promise<boolean> {
-    let sid = this.jwt.stateManager.sid(identifier, device)
+    const sid = this.jwt.stateManager.sid(identifier, device)
     return await this.jwt.stateManager.sessionExists(sid)
   }
 }

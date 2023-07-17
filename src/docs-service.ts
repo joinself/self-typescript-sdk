@@ -32,9 +32,9 @@ export default class DocsService {
    * @returns Response
    */
   async requestSignature(recipient: string, body: string, objects: Doc[]): Promise<Response | boolean | void> {
-    let jti = uuidv4()
-    let req = {
-      jti: jti,
+    const jti = uuidv4()
+    const req = {
+      jti,
       cid: jti,
       typ: "document.sign.req",
       aud: recipient,
@@ -42,11 +42,11 @@ export default class DocsService {
       objects: [],
     }
 
-    let auth_token = this.ms.jwt.authToken()
+    const auth_token = this.ms.jwt.authToken()
 
-    for (var i=0; i<objects.length; i++) {
-      let fo = new FileObject(auth_token, this.url)
-      await fo.buildFromData(objects[i].name, objects[i].data, objects[i].mime)
+    for (const obj of objects) {
+      const fo = new FileObject(auth_token, this.url)
+      await fo.buildFromData(obj.name, obj.data, obj.mime)
       req['objects'].push(fo.toPayload())
     }
 

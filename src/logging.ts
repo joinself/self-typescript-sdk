@@ -1,4 +1,4 @@
-const EventEmitter = require('events');
+import { EventEmitter } from 'events'
 
 export class LogManager extends EventEmitter {
   private options: LogOptions = {
@@ -43,21 +43,27 @@ export class LogManager extends EventEmitter {
       const format = '[%s] \x1b[%dm%s\x1b[0m %s'
       switch (logEntry.level) {
         case 'trace':
+          // tslint:disable-next-line: no-console
           console.trace(format, now.toISOString(), 34, logEntry.level.toUpperCase(), msg)
           break
         case 'debug':
+          // tslint:disable-next-line: no-console
           console.debug(format, now.toISOString(), 36, logEntry.level.toUpperCase(), msg)
           break
         case 'info':
+          // tslint:disable-next-line: no-console
           console.info(format, now.toISOString(), 32, logEntry.level.toUpperCase(), msg)
           break
         case 'warn':
+          // tslint:disable-next-line: no-console
           console.warn(format, now.toISOString(), 33, logEntry.level.toUpperCase(), msg)
           break
         case 'error':
+          // tslint:disable-next-line: no-console
           console.error(format, now.toISOString(), 31, logEntry.level.toUpperCase(), msg)
           break
         default:
+          // tslint:disable-next-line: no-console
           console.error('[%s] %s %s', now.toISOString(), logEntry.level.toUpperCase(), msg)
       }
     })

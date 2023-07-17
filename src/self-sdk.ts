@@ -102,7 +102,7 @@ export default class SelfSDK {
       stateManager?: SessionStorage
     }
   ): Promise<SelfSDK> {
-    let options = opts ? opts : {}
+    const options = opts ? opts : {}
     let logLevel = 'info'
     if (options['logLevel'] != undefined) {
       logLevel = options['logLevel']
@@ -120,7 +120,7 @@ export default class SelfSDK {
     sdk.jwt = await Jwt.build(appID, appKey, storageFolder, opts)
 
     storageFolder = `${storageFolder}/apps/${sdk.jwt.appID}/devices/${sdk.jwt.deviceID}`
-    var shell = require('shelljs')
+    const shell = require('shelljs')
     shell.mkdir('-p', `${storageFolder}/keys/${sdk.jwt.appKeyID}`)
 
     sdk.identityService = new IdentityService(sdk.jwt, sdk.baseURL)
@@ -159,7 +159,7 @@ export default class SelfSDK {
       sdk.encryptionClient
     )
 
-    let env = options['env'] ? options['env'] : '-'
+    const env = options['env'] ? options['env'] : '-'
     sdk.requester = new Requester(
       sdk.jwt,
       sdk.messagingService,
@@ -172,7 +172,7 @@ export default class SelfSDK {
     sdk.chatService = new ChatService(
       sdk.messagingService,
       sdk.identityService,
-      { env: env }
+      { env }
     )
     sdk.docsService = new DocsService(
       sdk.messagingService,
@@ -296,9 +296,9 @@ export default class SelfSDK {
   }
 
   private async deviceStillExists() {
-    let devices = await this.identityService.devices(this.jwt.appID)
-    for (var i=0; i<devices.length; i++) {
-      if (devices[i] == this.jwt.deviceID) {
+    const devices = await this.identityService.devices(this.jwt.appID)
+    for (const device of devices) {
+      if (device == this.jwt.deviceID) {
         return
       }
     }

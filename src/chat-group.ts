@@ -14,7 +14,7 @@ export class ChatGroup {
   members: string[]
   name: string
   link: string
-  key: string //TODO change this to correct type
+  key: string // TODO change this to correct type
   mime: string
 
 
