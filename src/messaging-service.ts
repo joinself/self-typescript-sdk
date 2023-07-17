@@ -114,7 +114,7 @@ export default class MessagingService {
       if (recipientID != this.jwt.appID) {
         const devices = await this.is.devices(recipientID)
         for (const device of devices) {
-          this.logger.debug(`adding recipient ${recipientID}:${devices[i]}`)
+          this.logger.debug(`adding recipient ${recipientID}:${device}`)
           recipients.push({
             id: recipientID,
             device

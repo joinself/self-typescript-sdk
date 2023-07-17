@@ -196,7 +196,7 @@ export default class Requester {
     // Envelope
     const msgs = []
     for (const device of devices) {
-      const msg = await this.buildEnvelope(id, intermediary, devices[i], ciphertext)
+      const msg = await this.buildEnvelope(id, intermediary, device, ciphertext)
       msgs.push(msg)
     }
 
