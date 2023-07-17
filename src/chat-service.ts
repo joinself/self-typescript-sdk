@@ -147,7 +147,7 @@ export default class ChatService {
       let fp = fo.toPayload()
       opts = { ...opts, ...fp }
     }
-    this.ms.send(members, p)
+    await this.ms.send(members, p)
     return new ChatGroup(this, p)
   }
 
@@ -161,7 +161,7 @@ export default class ChatService {
     await this.createMissingSessions(members)
 
     // Send joining confirmation.
-    this.ms.send(members, { typ: 'chat.join', gid: gid, aud: gid })
+    await this.ms.send(members, { typ: 'chat.join', gid: gid, aud: gid })
   }
 
   /**
@@ -170,7 +170,7 @@ export default class ChatService {
    * @param members list of group members.
    */
   async leave(gid: string, members: string[]) {
-    this.ms.send(members, { typ: 'chat.remove', gid: gid })
+    await this.ms.send(members, { typ: 'chat.remove', gid: gid })
   }
 
   /**
@@ -183,8 +183,8 @@ export default class ChatService {
       let cm = new ChatMessage(this, res['aud'], res)
       await cm.processObjects()
 
-      if (!('mark_as_delivered' in opts && opts['mark_as_delivered'] == false)) cm.markAsDelivered();
-      if ('mark_as_read' in opts && opts['mark_as_read'] == true) cm.markAsRead();
+      if (!('mark_as_delivered' in opts && opts['mark_as_delivered'] == false)) await cm.markAsDelivered();
+      if ('mark_as_read' in opts && opts['mark_as_read'] == true) await cm.markAsRead();
 
       callback(cm)
     })
