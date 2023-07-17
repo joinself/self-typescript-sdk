@@ -14,6 +14,7 @@ export default class EncryptionMock {
   path: string
   logger: Logger
   storage: SessionStorage
+  account: any
   mutex: Mutex
 
   public async encrypt(

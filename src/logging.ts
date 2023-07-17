@@ -1,4 +1,5 @@
-import { EventEmitter } from 'events'
+// tslint:disable-next-line: no-var-requires
+const EventEmitter = require('events');
 
 export class LogManager extends EventEmitter {
   private options: LogOptions = {
