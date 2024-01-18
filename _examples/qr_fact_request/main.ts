@@ -14,17 +14,17 @@ async function qrFactRequest(appID: string, appSecret: string, selfID: string) {
     await sdk.start()
 
     sdk.facts().subscribe((res: any): any => {
-        sdk.logger.info(res.attestationValuesFor('phone_number')[0])
+        sdk.logger.info(res.attestationValuesFor('unverified_phone_number')[0])
         exit()
     })
 
     // Generate a QR code to authenticate
-    let buf = sdk.facts().generateQR([{ fact: 'phone_number' }])
+    let buf = sdk.facts().generateQR([{ fact: 'unverified_phone_number' }])
 
     // You can manage your redirection codes on your app management on the
     // developer portal
     let redirectionCode = "90d017d1"
-    let link = sdk.facts().generateDeepLink(redirectionCode, [{ fact: 'phone_number' }])
+    let link = sdk.facts().generateDeepLink(redirectionCode, [{ fact: 'unverified_phone_number' }])
 
     const fs = require('fs').promises;
     await fs.writeFile('/tmp/qr.png', buf);

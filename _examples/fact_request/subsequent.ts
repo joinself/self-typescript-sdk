@@ -19,22 +19,22 @@ async function request(appID: string, appSecret: string, selfID: string) {
     const sdk = await SelfSDK.build( appID, appSecret, "random", storageFolder, opts);
     await sdk.start()
 
-    sdk.logger.info(`sending a fact request (phone_number) to ${selfID}`)
+    sdk.logger.info(`sending a fact request (unverified_phone_number) to ${selfID}`)
     sdk.logger.info(`waiting for user input`)
 
     try {
         let tenMinutes = 10 * 60 * 60
-        let res = await sdk.facts().request(selfID, [{ fact: 'phone_number' }], { allowedFor: tenMinutes })
+        let res = await sdk.facts().request(selfID, [{ fact: 'unverified_phone_number' }], { allowedFor: tenMinutes })
 
         if (!res) {
           sdk.logger.warn(`fact request has timed out`)
         } else if (res.status === 'accepted') {
-          let pn = res.attestationValuesFor('phone_number')[0]
+          let pn = res.attestationValuesFor('unverified_phone_number')[0]
           sdk.logger.info(`${selfID} phone number is "${pn}"`)
           sdk.logger.info(`waiting 60 seconds to send the same request`)
           await wait(60)
 
-          let res2 = await sdk.facts().request(selfID, [{ fact: 'phone_number' }], { allowedFor: tenMinutes })
+          let res2 = await sdk.facts().request(selfID, [{ fact: 'unverified_phone_number' }], { allowedFor: tenMinutes })
           if (!res2) {
             sdk.logger.warn(`fact request has timed out`)
           } else if (res2.status === 'accepted') {

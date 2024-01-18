@@ -71,9 +71,9 @@ describe('messaging', () => {
         expect(res.facts.length).toEqual(1)
 
         let fact = res.facts[0]
-        expect(fact.fact).toEqual('phone_number')
+        expect(fact.fact).toEqual('unverified_phone_number')
 
-        let attestation = res.attestationValuesFor('phone_number')
+        let attestation = res.attestationValuesFor('unverified_phone_number')
         expect(attestation['0']).toEqual('+441234567890')
       })
 

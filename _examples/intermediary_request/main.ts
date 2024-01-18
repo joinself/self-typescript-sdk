@@ -17,7 +17,7 @@ async function request(appID: string, appSecret: string, selfID: string) {
     sdk.logger.info(`waiting for user input`)
     try {
         let res = await sdk.facts().requestViaIntermediary(selfID, [{
-            fact: 'phone_number',
+            fact: 'unverified_phone_number',
             operator: '==',
             sources: ['user_specified'],
             expected_value: '+44111222333'
@@ -28,7 +28,7 @@ async function request(appID: string, appSecret: string, selfID: string) {
             sdk.logger.warn("you are unauthorized to run this action")
         }else if (res.status === 'accepted') {
             sdk.logger.info("your assertion is....")
-            sdk.logger.info(res.attestationValuesFor('phone_number')[0])
+            sdk.logger.info(res.attestationValuesFor('unverified_phone_number')[0])
         } else {
             sdk.logger.info("your request has been rejected")
         }
