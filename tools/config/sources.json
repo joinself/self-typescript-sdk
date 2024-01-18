@@ -4,7 +4,7 @@
           "document_number",
           "display_name",
           "email_address",
-          "phone_number"
+          "unverified_phone_number"
       ],
       "passport": [
           "document_number",

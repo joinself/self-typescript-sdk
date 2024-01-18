@@ -112,7 +112,7 @@ describe('FactsService', () => {
           expect(payload.aud).toEqual('26742678155')
           expect(payload.cid).toEqual(cid)
           expect(payload.jti.length).toEqual(36)
-          expect(payload.facts).toEqual([{ fact: 'phone_number' }])
+          expect(payload.facts).toEqual([{ fact: 'unverified_phone_number' }])
 
           return new Promise(resolve => {
             resolve({ status: 'accepted' })
@@ -120,7 +120,7 @@ describe('FactsService', () => {
         }
       )
 
-      let res = await fs.request('26742678155', [{ fact: 'phone_number' }])
+      let res = await fs.request('26742678155', [{ fact: 'unverified_phone_number' }])
       expect(res).toBeTruthy()
     })
 
@@ -146,7 +146,7 @@ describe('FactsService', () => {
         }
       )
 
-      await expect(fs.request('26742678155', [{ fact: 'phone_number' }])).rejects.toThrowError(
+      await expect(fs.request('26742678155', [{ fact: 'unverified_phone_number' }])).rejects.toThrowError(
         'Your credits have expired, please log in to the developer portal and top up your account.'
       )
     })
@@ -185,7 +185,7 @@ describe('FactsService', () => {
           expect(payload.aud).toEqual('self_intermediary')
           expect(payload.cid).toEqual(cid)
           expect(payload.jti.length).toEqual(36)
-          expect(payload.facts).toEqual([{ fact: 'phone_number' }])
+          expect(payload.facts).toEqual([{ fact: 'unverified_phone_number' }])
 
           return new Promise(resolve => {
             resolve({ status: 'accepted' })
@@ -193,7 +193,7 @@ describe('FactsService', () => {
         }
       )
 
-      let res = await fs.requestViaIntermediary('selfid', [{ fact: 'phone_number' }])
+      let res = await fs.requestViaIntermediary('selfid', [{ fact: 'unverified_phone_number' }])
       expect(res).toBeTruthy()
     })
 
@@ -225,7 +225,7 @@ describe('FactsService', () => {
         }
       )
 
-      let res = await fs.requestViaIntermediary('selfid', [{ fact: 'phone_number' }], {
+      let res = await fs.requestViaIntermediary('selfid', [{ fact: 'unverified_phone_number' }], {
         cid: 'cid',
         intermediary: 'intermediary'
       })
@@ -236,7 +236,7 @@ describe('FactsService', () => {
   describe('FactsService::generateDeepLink', () => {
     it('happy path', async () => {
       let callback = '0x000x'
-      let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
+      let link = fs.generateDeepLink(callback, [{ fact: 'unverified_phone_number' }])
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
@@ -251,12 +251,12 @@ describe('FactsService', () => {
       expect(payload.sub).toEqual('-')
       expect(payload.aud).toEqual('-')
       expect(payload.jti.length).toEqual(36)
-      expect(payload.facts).toEqual([{ fact: 'phone_number' }])
+      expect(payload.facts).toEqual([{ fact: 'unverified_phone_number' }])
     })
 
     it('happy path with custom options', async () => {
       let callback = '0x000x'
-      let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }], {
+      let link = fs.generateDeepLink(callback, [{ fact: 'unverified_phone_number' }], {
         cid: 'cid',
         selfid: 'selfid'
       })
@@ -274,14 +274,14 @@ describe('FactsService', () => {
       expect(payload.sub).toEqual('selfid')
       expect(payload.aud).toEqual('selfid')
       expect(payload.cid).toEqual('cid')
-      expect(payload.facts).toEqual([{ fact: 'phone_number' }])
+      expect(payload.facts).toEqual([{ fact: 'unverified_phone_number' }])
       expect(payload.jti.length).toEqual(36)
     })
 
     it('happy path for development', async () => {
       let callback = '0x000x'
       r.env = 'development'
-      let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
+      let link = fs.generateDeepLink(callback, [{ fact: 'unverified_phone_number' }])
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
@@ -296,13 +296,13 @@ describe('FactsService', () => {
       expect(payload.sub).toEqual('-')
       expect(payload.aud).toEqual('-')
       expect(payload.jti.length).toEqual(36)
-      expect(payload.facts).toEqual([{ fact: 'phone_number' }])
+      expect(payload.facts).toEqual([{ fact: 'unverified_phone_number' }])
     })
 
     it('happy path for production', async () => {
       let callback = '0x000x'
       r.env = ''
-      let link = fs.generateDeepLink(callback, [{ fact: 'phone_number' }])
+      let link = fs.generateDeepLink(callback, [{ fact: 'unverified_phone_number' }])
       const url = new URL(link)
 
       let callbackURL = new URL(url.searchParams.get('link'))
@@ -317,17 +317,17 @@ describe('FactsService', () => {
       expect(payload.sub).toEqual('-')
       expect(payload.aud).toEqual('-')
       expect(payload.jti.length).toEqual(36)
-      expect(payload.facts).toEqual([{ fact: 'phone_number' }])
+      expect(payload.facts).toEqual([{ fact: 'unverified_phone_number' }])
     })
   })
 
   describe('FactsService::generateQR', () => {
     it('happy path', async () => {
-      let qr = fs.generateQR([{ fact: 'phone_number' }])
+      let qr = fs.generateQR([{ fact: 'unverified_phone_number' }])
       expect(qr).not.toBe('')
     })
     it('happy path custom selfid', async () => {
-      let qr = fs.generateQR([{ fact: 'phone_number' }], { selfid: 'selfid' })
+      let qr = fs.generateQR([{ fact: 'unverified_phone_number' }], { selfid: 'selfid' })
       expect(qr).not.toBe('')
     })
   })

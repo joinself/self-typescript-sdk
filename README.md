@@ -70,7 +70,7 @@ The fact service can be used to ask for specific attested facts from an identity
 Request a fact:
 
 ```typescript
-let phoneNumber = await client.facts().request("<self-id>", [{ fact: "phone_number" }])
+let phoneNumber = await client.facts().request("<self-id>", [{ fact: "unverified_phone_number" }])
 ```
 
 #### Authentication
