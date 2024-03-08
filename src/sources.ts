@@ -4,7 +4,8 @@ export const SOURCE_DEFINITION = {
 			"document_number",
 			"display_name",
 			"email_address",
-			"unverified_phone_number"
+			"unverified_phone_number",
+			"location"
 		],
 		"passport": [
 			"photo",
