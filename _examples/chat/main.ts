@@ -60,7 +60,11 @@ async function chat(appID: string, appSecret: string, selfID: string) {
 
 
     sdk.logger.info(`sending a message to ${selfID}`)
-    await sdk.chat().message(selfID, "hello")
+    await sdk.chat().message(selfID, "hello", { "objects": [{
+        "link": "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
+        "name": "homer",
+        "mime": "image/gif",
+    }]})
 
     await wait(30000)
 

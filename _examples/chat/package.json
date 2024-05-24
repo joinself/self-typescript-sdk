@@ -10,6 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "self-sdk": "*"
+    "@types/ws": "<8.5.5",
+    "self-sdk": "*",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.6",
+    "sqlite3": "https://github.com/mapbox/node-sqlite3/tarball/master"
   }
 }
