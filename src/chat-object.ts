@@ -103,7 +103,8 @@ export class FileObject {
       link: this.link,
       key: this.key,
       mime: this.mime,
-      expires: this.expires
+      expires: this.expires,
+      public: (this.key == "")
     }
   }
 
