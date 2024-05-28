@@ -61,7 +61,13 @@ export default class ChatService {
       payload['objects'] = []
       for (const obj of opts.objects) {
         const fo = new FileObject(this.is.jwt.authToken(), this.is.url)
-        await fo.buildFromData(obj.name, obj.data, obj.mime)
+        if (obj.data == undefined) {
+          // This will be a public object...
+          await fo.buildFromObject(obj)
+        } else {
+          // This will be a private (uploaded object)
+          await fo.buildFromData(obj.name, obj.data, obj.mime)
+        }
         payload['objects'].push(fo.toPayload())
       }
     }
