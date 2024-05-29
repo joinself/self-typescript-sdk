@@ -14,6 +14,7 @@ export class FileObject {
   content: Buffer
   key: string
   nonce: string
+  public: boolean
   ciphertext: string
   _sodium: any
   logger: Logger
@@ -57,6 +58,7 @@ export class FileObject {
     this.expires = remoteObject.expires
     this.mime = mime
     this.name = name
+    this.public = false
 
     return this
   }
@@ -88,6 +90,7 @@ export class FileObject {
     this.link = input['link']
     this.name = input['name']
     this.mime = input['mime']
+    this.public = true
     this.expires = input['expires']
 
     return this
@@ -104,7 +107,7 @@ export class FileObject {
       key: this.key,
       mime: this.mime,
       expires: this.expires,
-      public: (this.key == "")
+      public: this.public,
     }
   }
 
