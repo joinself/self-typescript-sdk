@@ -39,18 +39,6 @@ export const SOURCE_DEFINITION = {
 			"nationality",
 			"country_of_issuance"
 		],
-		"twitter": [
-			"account_id",
-			"nickname"
-		],
-		"linkedin": [
-			"account_id",
-			"nickname"
-		],
-		"facebook": [
-			"account_id",
-			"nickname"
-		],
 		"live": [
 			"selfie_verification"
 		]
