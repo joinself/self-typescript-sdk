@@ -21,7 +21,10 @@ export default class Fact {
     f.attestations = []
     if ('attestations' in input) {
       for (const a of input.attestations) {
-        f.attestations.push(await Attestation.parse(f.fact, a, jwt, is))
+        const at = await Attestation.parse(f.fact, a, jwt, is)
+        if (at.value != null) {
+          f.attestations.push(at)
+        }
       }
     }
 
