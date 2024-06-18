@@ -13,7 +13,6 @@ import FactResponse from './fact-response'
 import SessionStorage from './storage'
 
 import * as fs from 'fs'
-import { openStdin } from 'process'
 import { v4 as uuidv4 } from 'uuid'
 import * as flatbuffers from 'flatbuffers'
 import { Identity, App } from './identity-service'

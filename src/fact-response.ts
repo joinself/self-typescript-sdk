@@ -4,7 +4,10 @@ import Fact from './fact'
 import Jwt from './jwt'
 import IdentityService from './identity-service'
 import Attestation from './attestation'
+import { FileObject } from './chat-object'
 export default class FactResponse {
+  payload: any
+  is: IdentityService
   jti: string
   cid: string
   status: string
@@ -20,6 +23,8 @@ export default class FactResponse {
   public static async parse(input: any, jwt: Jwt, is: IdentityService): Promise<FactResponse> {
     const r = new FactResponse()
 
+    r.payload = input
+    r.is = is
     r.jti = input.jti
     r.cid = input.cid
     r.status = input.status
@@ -33,6 +38,9 @@ export default class FactResponse {
     r.facts = []
 
     for (const fact of input.facts) {
+      if (fact['fact'] == 'photo') {
+        fact['fact'] = 'image_hash'
+      }
       r.facts.push(await Fact.parse(fact, jwt, is))
     }
 
@@ -40,6 +48,9 @@ export default class FactResponse {
   }
 
   fact(name: string): Fact | undefined {
+    if (name == "photo") {
+      name = "image_hash"
+    }
     for (const fact of this.facts) {
       if (fact.fact === name) {
         return fact
@@ -63,5 +74,15 @@ export default class FactResponse {
       att.push(at.value)
     }
     return att
+  }
+
+  async object(hash: string): Promise<FileObject> {
+    for (const o of this.payload.objects) {
+      if (o.image_hash == hash) {
+        const fo = new FileObject(this.is.jwt.authToken(), this.is.url)
+        return fo.buildFromObject(o)
+      }
+    }
+    return null
   }
 }
