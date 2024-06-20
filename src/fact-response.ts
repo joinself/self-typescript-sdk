@@ -59,6 +59,15 @@ export default class FactResponse {
     return undefined
   }
 
+  attestation(name: string): (Attestation|null) {
+    const att = this.attestationsFor(name)
+    if (att.length == 0) {
+      return null
+    }
+
+    return att[0]
+  }
+
   attestationsFor(name: string): Attestation[] {
     const fact = this.fact(name)
     if (fact === undefined) {

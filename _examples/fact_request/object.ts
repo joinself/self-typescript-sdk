@@ -26,15 +26,17 @@ async function request(appID: string, appSecret: string, selfID: string) {
         if (!res) {
           sdk.logger.warn(`fact request has timed out`)
         } else if (res.status === 'accepted') {
-          let pn = res.attestationValuesFor('photo')[0]
-
-          var o = await res.object(pn)
-          await fs.writeFile('/tmp/photo.jpg', o.content, (err) => {
-            if (err) throw err;
-            console.log('The file has been saved!');
-          });
-
-          sdk.logger.info(`${selfID} open the requested picture at /tmp/photo.jpg"`)
+          let at = res.attestation('photo')
+          if (at != null) {
+            var o = await res.object(at.value)
+            await fs.writeFile('/tmp/photo.jpg', o.content, (err) => {
+              if (err) throw err;
+              console.log('The file has been saved!');
+            });
+            sdk.logger.info(`${selfID} open the requested picture at /tmp/photo.jpg"`)
+          } else {
+            sdk.logger.warn(`No attestations have been returned`)
+          }
         } else {
           sdk.logger.warn(`${selfID} has rejected your authentication request`)
         }
