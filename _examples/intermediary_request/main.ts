@@ -26,11 +26,16 @@ async function request(appID: string, appSecret: string, selfID: string) {
             sdk.logger.warn(`fact request has timed out`)
         } else if(res.status === "unauthorized") {
             sdk.logger.warn("you are unauthorized to run this action")
-        }else if (res.status === 'accepted') {
-            sdk.logger.info("your assertion is....")
-            sdk.logger.info(res.attestationValuesFor('unverified_phone_number')[0])
+        } else if (res.status === 'accepted') {
+          const at = res.attestation('unverified_phone_number')
+          if (at == null) {
+            sdk.logger.warn(`No attestations have been returned`)
+            sdk.close()
+            exit();
+          }
+          sdk.logger.info(`your assertion is ${at.value}`)
         } else {
-            sdk.logger.info("your request has been rejected")
+          sdk.logger.info("your request has been rejected")
         }
     } catch (error) {
         sdk.logger.error(error.toString())

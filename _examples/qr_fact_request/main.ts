@@ -14,7 +14,7 @@ async function qrFactRequest(appID: string, appSecret: string, selfID: string) {
     await sdk.start()
 
     sdk.facts().subscribe((res: any): any => {
-        sdk.logger.info(res.attestationValuesFor('unverified_phone_number')[0])
+        sdk.logger.info(res.attestation('unverified_phone_number').value)
         exit()
     })
 

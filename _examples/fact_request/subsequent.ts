@@ -29,8 +29,14 @@ async function request(appID: string, appSecret: string, selfID: string) {
         if (!res) {
           sdk.logger.warn(`fact request has timed out`)
         } else if (res.status === 'accepted') {
-          let pn = res.attestationValuesFor('unverified_phone_number')[0]
-          sdk.logger.info(`${selfID} phone number is "${pn}"`)
+          let at = res.attestation('unverified_phone_number')
+          if (at == null) {
+            sdk.logger.warn(`No attestations have been returned`)
+            sdk.close()
+            exit();
+          }
+
+          sdk.logger.info(`${selfID} phone number is "${at.value}"`)
           sdk.logger.info(`waiting 60 seconds to send the same request`)
           await wait(60)
 

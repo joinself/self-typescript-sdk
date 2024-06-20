@@ -42,9 +42,13 @@ async function request(appID: string, appSecret: string, selfID: string) {
         if (!res) {
           sdk.logger.warn(`fact request has timed out`)
         } else if (res.status === 'accepted') {
-          let pn = res.attestationValuesFor(fact.key)[0]
-          let att = Delegation.parse(pn)
-          console.log(`User '${att.subjects.join(',')}' sent a proof he's '${att.effect}ed' to '${att.actions.join(",")}' on behalf of '${res.iss}'!`)
+          let at = res.attestation(fact.key)
+          if (at != null) {
+            let att = Delegation.parse(at.value)
+            console.log(`User '${att.subjects.join(',')}' sent a proof he's '${att.effect}ed' to '${att.actions.join(",")}' on behalf of '${res.iss}'!`)
+          } else {
+            sdk.logger.warn(`No attestations have been returned`)
+          }
         } else {
           sdk.logger.warn(`${selfID} has rejected your authentication request`)
         }
