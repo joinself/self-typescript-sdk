@@ -54,7 +54,7 @@ describe("chat-service", () => {
 
       let co = new FileObject(token, url, fi)
 
-      await co.buildFromData(name, data, mime)
+      await co.buildFromData(name, Buffer.from(data), mime)
 
       expect(co.link).toEqual(`${url}/v1/objects/${remoteObject.id}`)
       expect(co.mime).toEqual(mime)
