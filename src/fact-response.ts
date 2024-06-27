@@ -87,7 +87,7 @@ export default class FactResponse {
 
   async object(hash: string): Promise<FileObject> {
     for (const o of this.payload.objects) {
-      if (o.image_hash == hash) {
+      if (o.image_hash == hash || o.object_hash == hash) {
         const fo = new FileObject(this.is.jwt.authToken(), this.is.url)
         return fo.buildFromObject(o)
       }

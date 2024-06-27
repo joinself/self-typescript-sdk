@@ -36,8 +36,7 @@ async function main() {
     const sdk = await setupSDK(appID, appSecret)
     let terms = "please, read and accept terms and conditions"
 
-    var myArrayBuffer = readFileSync("./sample.pdf", null).buffer;
-    var content = new Uint8Array(myArrayBuffer);
+    var content = readFileSync("./sample.pdf", null);
 
     let docs = [{
       name: "Terms and conditions",

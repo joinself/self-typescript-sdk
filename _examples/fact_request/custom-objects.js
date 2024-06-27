@@ -39,17 +39,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 var self_sdk_1 = require("../../src/self-sdk");
 var process_1 = require("process");
+var facts_service_1 = require("../../src/facts-service");
 var fs_1 = require("fs");
-var groups = {};
-// Wait til the response is received
-var wait = function (seconds) {
-    return new Promise(function (resolve) {
-        return setTimeout(function () { return resolve(true); }, seconds * 1000);
-    });
-};
-function setupSDK(appID, appSecret) {
+function delay(ms) {
+    return new Promise(function (resolve) { return setTimeout(resolve, ms); });
+}
+function request(appID, appSecret, selfID) {
     return __awaiter(this, void 0, void 0, function () {
-        var opts, storageFolder, sdk;
+        var opts, storageFolder, sdk, source, content, obj, fact, res, at, o, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -64,46 +61,79 @@ function setupSDK(appID, appSecret) {
                     return [4 /*yield*/, sdk.start()];
                 case 2:
                     _a.sent();
-                    return [2 /*return*/, sdk];
+                    source = "supu";
+                    content = fs_1.readFileSync("./my_image.png");
+                    return [4 /*yield*/, sdk.newObject("test", content, "image/png")
+                        // obj.save("./my_image_copy.jpg")
+                    ];
+                case 3:
+                    obj = _a.sent();
+                    fact = new facts_service_1.FactToIssue("image", obj, source);
+                    sdk.logger.info("fact created");
+                    sdk.logger.info("issuing fact");
+                    return [4 /*yield*/, sdk.facts().issue(selfID, [fact])];
+                case 4:
+                    _a.sent();
+                    return [4 /*yield*/, delay(10000)];
+                case 5:
+                    _a.sent();
+                    sdk.logger.info("sending a fact request (" + fact.key + ") to " + selfID);
+                    sdk.logger.info("waiting for user input");
+                    _a.label = 6;
+                case 6:
+                    _a.trys.push([6, 14, , 15]);
+                    return [4 /*yield*/, sdk.facts().request(selfID, [{
+                                fact: fact.key,
+                                issuers: [appID]
+                            }])];
+                case 7:
+                    res = _a.sent();
+                    if (!!res) return [3 /*break*/, 8];
+                    sdk.logger.warn("fact request has timed out");
+                    return [3 /*break*/, 13];
+                case 8:
+                    if (!(res.status === 'accepted')) return [3 /*break*/, 12];
+                    at = res.attestation(fact.key);
+                    if (!(at != null)) return [3 /*break*/, 10];
+                    sdk.logger.info(selfID + " digest is \"" + at.value + "\"");
+                    return [4 /*yield*/, res.object(at.value)];
+                case 9:
+                    o = _a.sent();
+                    o.save("./received.png");
+                    sdk.logger.info("result stored at /tmp/received.png");
+                    return [3 /*break*/, 11];
+                case 10:
+                    sdk.logger.warn("No attestations have been returned");
+                    _a.label = 11;
+                case 11: return [3 /*break*/, 13];
+                case 12:
+                    sdk.logger.warn(selfID + " has rejected your authentication request");
+                    _a.label = 13;
+                case 13: return [3 /*break*/, 15];
+                case 14:
+                    error_1 = _a.sent();
+                    sdk.logger.error(error_1.toString());
+                    return [3 /*break*/, 15];
+                case 15:
+                    sdk.close();
+                    process_1.exit();
+                    return [2 /*return*/];
             }
         });
     });
 }
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var appID, appSecret, selfID, sdk, terms, content, docs, resp, i;
+        var appID, appSecret, selfID;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     appID = process.env["SELF_APP_ID"];
                     appSecret = process.env["SELF_APP_SECRET"];
                     selfID = process.env["SELF_USER_ID"];
-                    return [4 /*yield*/, setupSDK(appID, appSecret)];
+                    return [4 /*yield*/, request(appID, appSecret, selfID)];
                 case 1:
-                    sdk = _a.sent();
-                    terms = "please, read and accept terms and conditions";
-                    content = fs_1.readFileSync("./sample.pdf", null);
-                    docs = [{
-                            name: "Terms and conditions",
-                            data: content,
-                            mime: "application/pdf"
-                        }];
-                    return [4 /*yield*/, sdk.docs().requestSignature(selfID, terms, docs)];
-                case 2:
-                    resp = _a.sent();
-                    if (resp["status"] == "accepted") {
-                        console.log("Document signed!");
-                        console.log("");
-                        for (i = 0; i < resp["signed_objects"].length; i++) {
-                            console.log("- Name : " + resp["signed_objects"][0]["name"]);
-                            console.log("  Link : " + resp["signed_objects"][0]["link"]);
-                            console.log("  Hash : " + resp["signed_objects"][0]["hash"]);
-                        }
-                        console.log("");
-                        console.log("full signature");
-                        console.log(resp["input"]);
-                        process_1.exit(0);
-                    }
+                    _a.sent();
                     return [2 /*return*/];
             }
         });

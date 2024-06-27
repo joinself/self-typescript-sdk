@@ -15,6 +15,7 @@ import DocsService from './docs-service';
 import Requester from './requester';
 import { SessionStorage } from './storage';
 import VoiceService from './voice-service';
+import { FileObject } from './chat-object'
 
 /**
  * SelfSDK allow you interact with self network.
@@ -263,6 +264,14 @@ export default class SelfSDK {
    */
   voice(): VoiceService {
       return this.voiceService
+  }
+
+  async newObject(name: string, content: Buffer, mime: string): Promise<FileObject> {
+    const o = new FileObject(
+      this.jwt.authToken(),
+      this.baseURL
+    )
+    return o.buildFromData(name, content, mime)
   }
 
   private calculateBaseURL(opts?: { baseURL?: string; env?: string }) {

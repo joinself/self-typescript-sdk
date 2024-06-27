@@ -6,6 +6,7 @@ import Fact from './fact'
 import FactResponse from './fact-response'
 
 import Requester from './requester';
+import { FileObject } from './chat-object';
 
 
 /**
@@ -133,17 +134,31 @@ export default class FactsService {
 
     const attestations = []
     for (const fact of facts){
-      const f = { jti: uuidv4(),
+      const f = {
+        jti: uuidv4(),
         sub: selfid,
         iss: this.requester.jwt.appID,
         iat: iat.toISOString(),
         exp: exp.toISOString(),
         source: fact['source'],
         verified: true,
-        facts: [ fact ] }
+        facts: [ {
+          source: fact.source,
+          key: fact.key,
+          value: fact.value,
+          group: fact.group,
+          type: fact.type
+        } ] }
 
       attestations.push(this.requester.jwt.toJWS(f))
     }
+
+    const objects = []
+    facts.forEach((fact: FactToIssue) => {
+      if (fact.object && fact.object !== null) {
+        objects.push(fact.object.toPayload());
+      }
+    });
 
     // Ciphertext
     const c: {[k: string]: any} = {
@@ -156,7 +171,8 @@ export default class FactsService {
       cid,
       jti: uuidv4(),
       status: 'verified',
-      attestations
+      attestations,
+      objects
     }
 
     if(options.viewers) {
@@ -176,12 +192,19 @@ export class FactToIssue {
   source: string
   group?: Group
   type?: string
+  object?: FileObject
 
-  constructor(key: string, value: string, source: string, opts?: {group?: Group, type?: string}) {
+  constructor(key: string, value: string|FileObject, source: string, opts?: {group?: Group, type?: string}) {
     const options = opts ? opts : {}
 
+    if (value instanceof FileObject) {
+      this.value = value.hash
+      this.object = value
+    } else {
+      this.value = value
+    }
+
     this.key = key
-    this.value = value
     this.source = source
 
     if("group" in options) {

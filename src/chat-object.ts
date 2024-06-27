@@ -1,5 +1,7 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 import { logging, Logger } from './logging'
+import { createHash } from 'crypto';
+import { writeFileSync } from 'fs';
 
 /**
  * FileObject represents an object (image or file) shared through messaging.
@@ -19,6 +21,7 @@ export class FileObject {
   _sodium: any
   logger: Logger
   fi: RemoteFileInteractor
+  hash: string
 
   /**
    * Creates a new FileObject.
@@ -44,7 +47,7 @@ export class FileObject {
    * @param mime mime type.
    * @returns the current FileObject
    */
-  async buildFromData(name: string, data: string|Uint8Array, mime: string): Promise<FileObject> {
+  async buildFromData(name: string, data: Buffer, mime: string): Promise<FileObject> {
     await this._sodium.ready;
 
     // Encrypt the message
@@ -59,6 +62,8 @@ export class FileObject {
     this.mime = mime
     this.name = name
     this.public = false
+    this.content = data
+    this.hash = this.calculateHash(data)
 
     return this
   }
@@ -87,6 +92,8 @@ export class FileObject {
     }
 
     this.content = buf
+
+    this.hash = this.calculateHash(this.content.toString('binary'))
     this.link = input['link']
     this.name = input['name']
     this.mime = input['mime']
@@ -108,7 +115,13 @@ export class FileObject {
       mime: this.mime,
       expires: this.expires,
       public: this.public,
+      object_hash: this.hash
     }
+  }
+
+  save(path: string) {
+    // let newContent = Buffer.from(this.content, 'binary');
+    writeFileSync(path, this.content);
   }
 
   private encryptObject(plaintext: string|Uint8Array) {
@@ -123,6 +136,20 @@ export class FileObject {
     );
 
     return { key: this.buildShareableKey(key, pNonce), ciphertext: ct }
+  }
+
+  /**
+   * Calculates the sha256 hash for a given string.
+   * @param ct input to be hashed
+   * @returns the hash of the input.
+   */
+  private calculateHash(ct: string|Uint8Array): string {
+    const hash = createHash('sha256');
+    hash.update(ct);
+    const base64Url = hash.digest().toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
+    const urlSafeBase64Url = base64Url.replace(/=+$/, '');
+
+    return urlSafeBase64Url;
   }
 
   /**
